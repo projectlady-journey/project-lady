@@ -1,21 +1,19 @@
-Project Lady v0.7
-Welcome refinement + local save + return top
+Project Lady v0.8 / Home v0.1
 
-GitHubの project-lady リポジトリに、展開後の中身をそのまま Upload files してください。
+GitHubへはZIPを展開し、中身をそのままUpload filesしてください。
 
-内容:
-- index.html
-- css/style.css
-- js/app.js
-- assets/images/
+今回:
+- Welcome修正3点
+  1. 「旅は、どこまで決まってる？」スマホ1行化
+  2. 「寄り道も、思い出も、みんなで。」
+  3. 再訪TOP「さぁ、どこまで行こうか。」
+- 保存機能を維持
+- 「続きから見る」から初めて実際の旅ホームへ遷移
+- 大阪・紀南3泊4日 / 2026.11.19-11.22 をホームに表示
+- 交通 / ホテル・予約 / 旅程 / 持ちもの / Memo / 旅ログ の入口
+- 各入口は現時点では次開発用プレースホルダー
 
-主な変更:
-- スマホの「誰と？」と「気分」を2列×2段
-- カード説明を短くProject Ladyらしい言葉へ調整
-- 「寄り道も、思い出も、みんなで。」反映
-- 選択に応じた短いキャッチコピー
-- 保存機能維持
-- 再訪TOP維持
-- WELCOME BACKは控えめ／「おかえり」は入れない
-- ブラウザ標準alertを保存完了には使わない
-- 既存のwelcome.jpgがあれば自動使用
+写真:
+assets/images/welcome.jpg = Welcome背景
+assets/images/home.jpg = Home背景
+画像がなければ仮写真を表示します。
