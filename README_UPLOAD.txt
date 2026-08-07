@@ -1,11 +1,21 @@
-Project Lady v0.6 - Save + Return Top
+Project Lady v0.7
+Welcome refinement + local save + return top
 
-今回の追加:
-- Welcome Flowの選択をブラウザ内(localStorage)へ保存
-- 次回アクセス時はWelcomeを繰り返さず「続きから見る」TOPを表示
-- 保存した旅の方針に合わせてキャッチコピーを変更
-- 「旅の方針を決め直す」で保存を消してWelcomeへ戻れる
+GitHubの project-lady リポジトリに、展開後の中身をそのまま Upload files してください。
 
-GitHubへの入れ方:
-このフォルダの中身を project-lady の Upload files に全部入れて Commit changes。
-既存の index.html / css/style.css / js/app.js は上書きでOK。
+内容:
+- index.html
+- css/style.css
+- js/app.js
+- assets/images/
+
+主な変更:
+- スマホの「誰と？」と「気分」を2列×2段
+- カード説明を短くProject Ladyらしい言葉へ調整
+- 「寄り道も、思い出も、みんなで。」反映
+- 選択に応じた短いキャッチコピー
+- 保存機能維持
+- 再訪TOP維持
+- WELCOME BACKは控えめ／「おかえり」は入れない
+- ブラウザ標準alertを保存完了には使わない
+- 既存のwelcome.jpgがあれば自動使用
