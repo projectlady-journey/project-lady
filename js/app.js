@@ -15,15 +15,16 @@ const app=document.getElementById("app"),sheet=document.getElementById("sheet"),
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")}catch(e){return null}}
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({...answers,savedAt:new Date().toISOString()}))}
 function clear(){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(UI_STATE_KEY)}
-function saveUiState(page){localStorage.setItem(UI_STATE_KEY,JSON.stringify({page,savedAt:new Date().toISOString()}))}
+function saveUiState(page,extra={}){localStorage.setItem(UI_STATE_KEY,JSON.stringify({page,...extra,savedAt:new Date().toISOString()}))}
 function loadUiState(){try{return JSON.parse(localStorage.getItem(UI_STATE_KEY)||"null")}catch(e){return null}}
 function partyCopy(p){return({solo:"今日は、自分の歩幅で。",pair:"同じ景色を、隣で。",group:"寄り道も、思い出も、みんなで。",later:"旅は、ここから始まる。"})[p]||""}
 function stageCopy(s){return({planning:"旅は、ここから始まる。",partial:"続きは、ゆっくり決めよう。",mostly:"あと少しで、旅になる。",traveling:"今日という旅を、大切に。",memory:"旅が終わっても、残るものを。"})[s]||""}
 function showHero(t){heroCopy.textContent=t||"";heroCopy.classList.toggle("show",!!t)}
 function swap(fn){stage.classList.remove("active");setTimeout(()=>{fn();requestAnimationFrame(()=>stage.classList.add("active"))},330)}
 function progress(){let h='<div class="progress">';for(let i=1;i<=3;i++)h+=`<span class="dot ${currentScreen===i?"active":""}"></span>`;return h+"</div>"}
-function renderReturn(profile){app.classList.remove("home-mode");stage.className="stage active";showHero(partyCopy(profile.party));swap(()=>{sheet.className="sheet";sheet.innerHTML=`<p class="tiny">WELCOME BACK</p><p class="final-message">さぁ、どこまで行こうか。</p><p class="final-sub">前に決めた旅の方針は、そのまま残ってるよ。</p><button class="start-button" id="continue">続きから見る</button><div class="secondary-row"><button class="restart" id="reset">旅の方針を決め直す</button></div><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("continue").onclick=renderHome;document.getElementById("reset").onclick=()=>{clear();Object.keys(answers).forEach(k=>answers[k]=null);currentScreen=0;showHero("");render()}})}
+function renderReturn(profile){saveUiState("return");app.classList.remove("home-mode");stage.className="stage active";showHero(partyCopy(profile.party));swap(()=>{sheet.className="sheet";sheet.innerHTML=`<p class="tiny">WELCOME BACK</p><p class="final-message">さぁ、どこまで行こうか。</p><p class="final-sub">前に決めた旅の方針は、そのまま残ってるよ。</p><button class="start-button" id="continue">続きから見る</button><div class="secondary-row"><button class="restart" id="reset">旅の方針を決め直す</button></div><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("continue").onclick=renderHome;document.getElementById("reset").onclick=()=>{clear();Object.keys(answers).forEach(k=>answers[k]=null);currentScreen=0;showHero("");render()}})}
 function render(){
+ saveUiState("welcome",{screen:currentScreen});
  app.classList.remove("home-mode");stage.className="stage active";const s=screens[currentScreen];showHero("");
  swap(()=>{
   if(s.type!=="final")showHero("");
@@ -132,7 +133,7 @@ function renderDestinationStart(){
 }
 
 function renderPlaceholder(name){
- saveUiState("home");
+ saveUiState("placeholder",{name});
  stage.className="home-stage";sheet.className="";
  sheet.innerHTML=`<section class="home"><div class="placeholder"><p class="home-kicker">PROJECT LADY</p><h2>${name}</h2><p>ここは次の開発で、11月の旅の実データを入れながら育てます。</p><button class="text-link" id="homeBack">← 旅のホームへ戻る</button></div></section>`;
  document.getElementById("homeBack").onclick=renderHome;
@@ -140,4 +141,27 @@ function renderPlaceholder(name){
 function next(){if(currentScreen<screens.length-1){currentScreen++;render()}}
 function back(){if(currentScreen>0){currentScreen--;render()}}
 function restart(){currentScreen=0;Object.keys(answers).forEach(k=>answers[k]=null);render()}
-const saved=load();if(saved){Object.assign(answers,saved);const ui=loadUiState();if(ui?.page==="transport")renderTransport();else if(ui?.page==="destination")renderDestinationStart();else if(ui?.page==="home")renderHome();else renderReturn(saved)}else render();
+function restoreLastLocation(){
+ const saved=load();
+ const ui=loadUiState();
+ if(saved) Object.assign(answers,saved);
+
+ // A journey profile is required before restoring inside the app.
+ if(!saved){currentScreen=0;render();return;}
+
+ if(ui?.page==="transport"){renderTransport();return;}
+ if(ui?.page==="destination"){renderDestinationStart();return;}
+ if(ui?.page==="home"){renderHome();return;}
+ if(ui?.page==="placeholder"){renderPlaceholder(ui.name||"今回の旅");return;}
+ if(ui?.page==="welcome"){
+   const n=Number(ui.screen);
+   currentScreen=Number.isInteger(n)&&n>=0&&n<screens.length?n:1;
+   render();
+   return;
+ }
+ if(ui?.page==="return"){renderReturn(saved);return;}
+
+ // Old versions may have no usable location record.
+ renderReturn(saved);
+}
+restoreLastLocation();
