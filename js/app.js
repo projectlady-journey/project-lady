@@ -23,12 +23,13 @@ function renderReturn(profile){app.classList.remove("home-mode");stage.className
 function render(){
  app.classList.remove("home-mode");stage.className="stage active";const s=screens[currentScreen];showHero("");
  swap(()=>{
+  if(s.type!=="final")showHero("");
   sheet.className="sheet";
   if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=next;return}
-  if(s.type==="final"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">${partyCopy(answers.party)||"今回の旅を、楽しもう。"}</p><p class="final-sub">${stageCopy(answers.stage)}</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;document.getElementById("save").onclick=()=>{save();renderReturn(load())};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
+  if(s.type==="final"){showHero(partyCopy(answers.party)||stageCopy(answers.stage)||"旅は、ここから始まる。");sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">この旅を、はじめよう。</p><p class="final-sub">選んだ内容は、あとからいつでも変えられます。</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div><p class="footer-message">Thank you for traveling with us.</p>`;document.getElementById("save").onclick=()=>{save();renderHome()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
   const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
   sheet.innerHTML=`<button class="card-skip" id="skip">スキップ</button>${progress()}<p class="tiny">${s.eyebrow}</p><h1 class="${s.key==="stage"?"stage-question-title":""}">${s.title}</h1><p class="lead">${s.text}</p><div class="choices ${s.compact?"compact-four":""}">${ch}</div><div class="secondary-row"><button class="back" id="back">ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
-  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{answers[s.key]=b.dataset.value;setTimeout(next,170)});
+  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;setTimeout(next,170)});
   document.getElementById("skip").onclick=()=>{currentScreen=screens.length-1;render()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;
  })
 }
