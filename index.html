@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1ea">
+
+  <title>Project Lady</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+
+      background: #f4f1ea;
+      color: #343532;
+    }
+
+    .welcome {
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .content {
+      width: min(100%, 480px);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 22px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #77786f;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 12vw, 68px);
+      font-weight: 400;
+      letter-spacing: -0.035em;
+      line-height: 1;
+    }
+
+    .line {
+      width: 42px;
+      height: 1px;
+      margin: 32px auto;
+      background: #9b9b91;
+    }
+
+    .message {
+      margin: 0;
+      font-size: 15px;
+      line-height: 2;
+      letter-spacing: 0.04em;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+
+      margin-top: 42px;
+      min-width: 220px;
+      padding: 16px 28px;
+
+      border: 1px solid #66685f;
+      border-radius: 999px;
+
+      background: transparent;
+      color: #343532;
+
+      font: inherit;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+
+      cursor: pointer;
+      transition:
+        background 180ms ease,
+        color 180ms ease,
+        transform 180ms ease;
+    }
+
+    .button:hover {
+      background: #343532;
+      color: #f4f1ea;
+    }
+
+    .button:active {
+      transform: scale(0.98);
+    }
+
+    .arrow {
+      font-size: 18px;
+      transition: transform 180ms ease;
+    }
+
+    .button:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    .note {
+      margin-top: 56px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: #888980;
+    }
+
+    @media (max-width: 480px) {
+      .welcome {
+        padding: 32px 22px;
+      }
+
+      .message {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="welcome">
+    <div class="content">
+
+      <p class="eyebrow">A journey begins</p>
+
+      <h1>Project Lady</h1>
+
+      <div class="line"></div>
+
+      <p class="message">
+        旅の前から、旅の途中も、旅のあとも。<br>
+        一緒に旅をする場所。
+      </p>
+
+      <button class="button" type="button" id="startButton">
+        旅をはじめる
+        <span class="arrow">→</span>
+      </button>
+
+      <p class="note">
+        This app is also on a journey.
+      </p>
+
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("startButton").addEventListener("click", function () {
+      this.innerHTML = '旅は、ここから。 <span class="arrow">→</span>';
+    });
+  </script>
+
+</body>
+</html>
