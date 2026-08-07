@@ -58,8 +58,147 @@ function renderHome(){
     <p class="home-note"><span class="home-note-en">This app is also on a journey.</span><span class="home-note-ja">このアプリも旅の途中です。</span></p>
    </div>
  </section>`;
- document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>renderPlaceholder(b.dataset.page));
+ document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>{
+   if(b.dataset.page==="交通") renderTransport();
+   else renderPlaceholder(b.dataset.page);
+ });
 }
+
+const TRANSPORT_KEY="projectLadyTransport_v01";
+
+function defaultTransport(){
+ return [
+  {id:"leg1",label:"01",date:"11/19",from:"横浜",to:"大阪",mode:"未定",time:"",price:"",status:"検討中",url:"",memo:""},
+  {id:"leg2",label:"02",date:"11/20",from:"大阪",to:"紀伊勝浦",mode:"未定",time:"",price:"",status:"検討中",url:"",memo:""},
+  {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"未定",time:"",price:"",status:"検討中",url:"",memo:""},
+  {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"横浜",mode:"未定",time:"",price:"",status:"検討中",url:"",memo:""}
+ ];
+}
+function loadTransport(){
+ try{
+  const v=JSON.parse(localStorage.getItem(TRANSPORT_KEY)||"null");
+  return Array.isArray(v)&&v.length?v:defaultTransport();
+ }catch(e){return defaultTransport();}
+}
+function saveTransport(data){
+ localStorage.setItem(TRANSPORT_KEY,JSON.stringify(data));
+}
+function esc(v){
+ return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function renderTransport(){
+ app.classList.add("home-mode");
+ showHero("");
+ stage.className="home-stage";
+ sheet.className="";
+ const data=loadTransport();
+
+ sheet.innerHTML=`<section class="transport-page">
+   <header class="inside-header">
+     <button class="inside-back" id="transportHome">←</button>
+     <div>
+       <p class="inside-kicker">PROJECT LADY / ROUTE</p>
+       <h1>交通</h1>
+     </div>
+   </header>
+
+   <div class="transport-wrap">
+     <section class="transport-intro">
+       <p class="transport-lead">移動を、ひとつずつ。</p>
+       <p class="transport-note">11月の大阪・紀南旅を想定した仮区間。時間・料金・予約先は、決まったものから入れていく。</p>
+     </section>
+
+     <div class="transport-list">
+       ${data.map((x,i)=>`
+       <article class="route-card" data-id="${esc(x.id)}">
+         <div class="route-top">
+           <span class="route-no">${esc(x.label)}</span>
+           <input class="route-date" data-field="date" value="${esc(x.date)}" aria-label="日付">
+         </div>
+         <div class="route-line">
+           <input class="route-place route-from" data-field="from" value="${esc(x.from)}" aria-label="出発地">
+           <span class="route-arrow">→</span>
+           <input class="route-place route-to" data-field="to" value="${esc(x.to)}" aria-label="到着地">
+         </div>
+
+         <div class="route-grid">
+           <label>移動手段
+             <select data-field="mode">
+               ${["未定","新幹線","特急・電車","飛行機","レンタカー","バス","その他"].map(v=>`<option ${x.mode===v?"selected":""}>${v}</option>`).join("")}
+             </select>
+           </label>
+           <label>時間
+             <input data-field="time" value="${esc(x.time)}" placeholder="例 09:10 → 11:20">
+           </label>
+           <label>料金
+             <input data-field="price" value="${esc(x.price)}" placeholder="例 14,500円">
+           </label>
+           <label>状態
+             <select data-field="status">
+               ${["検討中","候補","予約予定","予約済み"].map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}
+             </select>
+           </label>
+         </div>
+
+         <label class="route-wide">予約・確認ページ
+           <input data-field="url" value="${esc(x.url)}" placeholder="https://...">
+         </label>
+         <label class="route-wide">Memo
+           <textarea data-field="memo" rows="2" placeholder="乗換、座席、乗り捨てなど">${esc(x.memo)}</textarea>
+         </label>
+         <div class="route-actions">
+           <button class="route-open" data-open ${x.url?"":"disabled"}>予約先を開く</button>
+           <span class="route-saved">自動保存</span>
+         </div>
+       </article>`).join("")}
+     </div>
+
+     <button class="add-leg" id="addTransportLeg">＋ 区間を追加</button>
+
+     <p class="inside-footer">
+       <span>This app is also on a journey.</span>
+       <small>このアプリも旅の途中です。</small>
+     </p>
+   </div>
+ </section>`;
+
+ document.getElementById("transportHome").onclick=renderHome;
+
+ function collect(){
+   const cards=[...document.querySelectorAll(".route-card")];
+   const fresh=cards.map((card,i)=>{
+     const obj={id:card.dataset.id||`leg${Date.now()}_${i}`,label:String(i+1).padStart(2,"0")};
+     card.querySelectorAll("[data-field]").forEach(el=>obj[el.dataset.field]=el.value);
+     return obj;
+   });
+   saveTransport(fresh);
+   return fresh;
+ }
+ document.querySelectorAll(".route-card [data-field]").forEach(el=>{
+   el.addEventListener("input",()=>{
+     const fresh=collect();
+     const card=el.closest(".route-card");
+     const obj=fresh.find(v=>v.id===card.dataset.id);
+     const open=card.querySelector("[data-open]");
+     open.disabled=!obj.url;
+   });
+   el.addEventListener("change",collect);
+ });
+ document.querySelectorAll("[data-open]").forEach(btn=>{
+   btn.onclick=()=>{
+     const card=btn.closest(".route-card");
+     const url=card.querySelector('[data-field="url"]').value.trim();
+     if(url) window.open(url,"_blank","noopener");
+   };
+ });
+ document.getElementById("addTransportLeg").onclick=()=>{
+   const fresh=collect();
+   fresh.push({id:`leg${Date.now()}`,label:String(fresh.length+1).padStart(2,"0"),date:"",from:"",to:"",mode:"未定",time:"",price:"",status:"検討中",url:"",memo:""});
+   saveTransport(fresh);
+   renderTransport();
+ };
+}
+
 function renderPlaceholder(name){
  stage.className="home-stage";sheet.className="";
  sheet.innerHTML=`<section class="home"><div class="placeholder"><p class="home-kicker">PROJECT LADY</p><h2>${name}</h2><p>ここは次の開発で、11月の旅の実データを入れながら育てます。</p><button class="text-link" id="homeBack">← 旅のホームへ戻る</button></div></section>`;
