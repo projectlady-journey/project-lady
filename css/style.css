@@ -253,3 +253,13 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 .route-search{padding:14px 0 2px}.route-search>span{display:block;margin-bottom:8px;color:#8b8e88;font-size:11px}.route-search-links{display:flex;flex-wrap:wrap;gap:7px}
 .route-actions{justify-content:flex-end}.transport-flow{margin-top:22px;padding:20px;border-radius:22px;background:#f6f4ee}.transport-flow ol{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:12px}.transport-flow li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}.transport-flow li>span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#fff;color:#777d75;font:11px "Courier New",monospace}.transport-flow strong{display:block;font-size:14px;font-weight:500}.transport-flow small{display:block;margin-top:3px;color:var(--soft);font-size:11.5px;line-height:1.5}
 @media(min-width:760px){.search-tools{grid-template-columns:repeat(4,1fr)}}
+
+/* Transport v0.3 - destination-first flow */
+.destination-intro{margin-bottom:18px}
+.destination-ways{display:grid;grid-template-columns:1fr;gap:10px}
+.destination-way{width:100%;text-align:left;border:1px solid rgba(65,72,67,.10);border-radius:20px;background:rgba(255,255,255,.82);padding:17px 18px;color:var(--ink);cursor:default}
+.destination-way small{display:block;margin-bottom:6px;font:9.5px "Courier New",monospace;letter-spacing:.12em;color:#9a9e97}
+.destination-way strong{display:block;font-size:16px;font-weight:500}
+.destination-way span{display:block;margin-top:5px;color:var(--soft);font-size:12.5px;line-height:1.55}
+.destination-later{margin:18px 2px 0;color:#8b8f88;font-size:12px;line-height:1.7}
+@media(min-width:760px){.destination-ways{grid-template-columns:1fr 1fr}}

@@ -88,6 +88,8 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function linkButton(key,small=false){const x=TRANSPORT_LINKS[key];return `<a class="${small?"search-chip":"search-tool"}" href="${x.url}" target="_blank" rel="noopener">${x.label}</a>`;}
 function routeTools(id){if(id==="leg1")return ["yahoo","maps","skyscanner","flights","jal"];if(id==="leg2")return ["yahoo","maps","e5489"];if(id==="leg3")return ["maps","nukui"];if(id==="leg4")return ["maps","skyscanner","flights","jal"];return ["yahoo","maps"];}
 function renderTransport(){
+ const profile=load()||answers;
+ if(profile.stage==="planning"){renderDestinationStart();return;}
  app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";const data=loadTransport();
  sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="transportHome">←</button><div><p class="inside-kicker">PROJECT LADY / ROUTE</p><h1>交通</h1></div></header><div class="transport-wrap">
  <section class="transport-intro"><p class="transport-lead">まず、どう行くかを見る。</p><p class="transport-note">経路を見て、候補を比べて、最後に公式条件を確認する。予約先のURLを手入力する必要はありません。</p></section>
@@ -100,6 +102,22 @@ function renderTransport(){
  function collect(){const cards=[...document.querySelectorAll(".route-card")];const fresh=cards.map((card,i)=>{const obj={id:card.dataset.id||`leg${Date.now()}_${i}`,label:String(i+1).padStart(2,"0")};card.querySelectorAll("[data-field]").forEach(el=>obj[el.dataset.field]=el.value);return obj;});saveTransport(fresh);return fresh;}
  document.querySelectorAll(".route-card [data-field]").forEach(el=>{el.addEventListener("input",collect);el.addEventListener("change",collect);});
  document.getElementById("addTransportLeg").onclick=()=>{const fresh=collect();fresh.push({id:`leg${Date.now()}`,label:String(fresh.length+1).padStart(2,"0"),date:"",from:"",to:"",mode:"未定",time:"",price:"",status:"検討中",memo:""});saveTransport(fresh);renderTransport();};
+}
+
+function renderDestinationStart(){
+ app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
+ const ways=[
+  ["TOGETHER","一緒に考える","気になることから、少しずつ。"],
+  ["EXPERIENCE","体験から決める","食べたい、見たい、やってみたいから。"],
+  ["BUDGET","予算から決める","無理のない範囲から、行ける場所を。"],
+  ["DAYS","日数から決める","使える時間に合う旅を。"]
+ ];
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="destinationHome">←</button><div><p class="inside-kicker">PROJECT LADY / JOURNEY</p><h1>旅先を考える</h1></div></header><div class="transport-wrap">
+ <section class="destination-intro"><p class="transport-lead">まだ決まっていなくて、大丈夫。</p><p class="transport-note">先に交通を決めなくても大丈夫。今の気分に近いところから、旅先を考えていこう。</p></section>
+ <div class="destination-ways">${ways.map(w=>`<button class="destination-way" type="button"><small>${w[0]}</small><strong>${w[1]}</strong><span>${w[2]}</span></button>`).join("")}</div>
+ <p class="destination-later">旅先や方面が見えてきたら、交通の検索や比較へ進めます。</p>
+ <p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
+ document.getElementById("destinationHome").onclick=renderHome;
 }
 
 function renderPlaceholder(name){
