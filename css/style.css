@@ -237,3 +237,19 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
   .route-card{display:flex;flex-direction:column}
   .route-actions{margin-top:auto;padding-top:14px}
 }
+
+
+/* Transport v0.2 */
+.search-hub{margin:0 0 18px;padding:20px;border:1px solid rgba(65,72,67,.10);border-radius:22px;background:#f2f5ef}
+.search-hub-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.search-hub-kicker{margin:0 0 4px;font:10px "Courier New",monospace;letter-spacing:.14em;color:#959a92}
+.search-hub h2,.transport-flow h2{margin:0;font-size:20px;font-weight:500}
+.search-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.search-tool,.search-chip{text-decoration:none;color:var(--ink);border:1px solid rgba(65,72,67,.11);background:rgba(255,255,255,.80)}
+.search-tool{padding:12px 13px;border-radius:14px;font-size:13px}
+.search-chip{display:inline-block;padding:8px 10px;border-radius:999px;font-size:11.5px}
+.search-tool:hover,.search-chip:hover{border-color:rgba(65,72,67,.28);background:#fff}
+.search-hub-note{margin:13px 0 0;color:var(--soft);font-size:12.5px;line-height:1.7}
+.route-search{padding:14px 0 2px}.route-search>span{display:block;margin-bottom:8px;color:#8b8e88;font-size:11px}.route-search-links{display:flex;flex-wrap:wrap;gap:7px}
+.route-actions{justify-content:flex-end}.transport-flow{margin-top:22px;padding:20px;border-radius:22px;background:#f6f4ee}.transport-flow ol{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:12px}.transport-flow li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}.transport-flow li>span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#fff;color:#777d75;font:11px "Courier New",monospace}.transport-flow strong{display:block;font-size:14px;font-weight:500}.transport-flow small{display:block;margin-top:3px;color:var(--soft);font-size:11.5px;line-height:1.5}
+@media(min-width:760px){.search-tools{grid-template-columns:repeat(4,1fr)}}
