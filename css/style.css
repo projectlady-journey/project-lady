@@ -23,3 +23,8 @@ h1{margin:0;font-size:clamp(27px,7.4vw,36px);font-weight:500;line-height:1.42;le
 .footer-message{margin-top:22px;font-family:"Courier New",monospace;color:var(--soft);font-size:12px;letter-spacing:.07em}
 @media(max-width:520px){.stage{padding-top:88px;padding-bottom:max(10px,env(safe-area-inset-bottom))}.sheet{padding:21px 20px 17px;border-radius:25px}.tiny{font-size:12.5px}.lead{font-size:16px}}
 @media(min-width:760px){.stage{justify-content:flex-start;align-items:flex-end;padding:110px 0 4.8vh 6vw}.sheet{padding:30px 32px 25px}.choices{grid-template-columns:1fr 1fr}}
+
+/* v0.6: saved journey / return top */
+.return-sheet{background:rgba(244,241,234,.84);max-width:560px}
+.return-copy{font-size:clamp(27px,6.8vw,39px);line-height:1.5}
+@media(min-width:760px){.return-sheet{margin-bottom:8vh}.return-copy{font-size:38px}}

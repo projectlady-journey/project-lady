@@ -1,11 +1,11 @@
-Project Lady Welcome v0.5
+Project Lady v0.6 - Save + Return Top
 
-GitHubの project-lady リポジトリへ、このフォルダ構成のままアップロードしてください。
+今回の追加:
+- Welcome Flowの選択をブラウザ内(localStorage)へ保存
+- 次回アクセス時はWelcomeを繰り返さず「続きから見る」TOPを表示
+- 保存した旅の方針に合わせてキャッチコピーを変更
+- 「旅の方針を決め直す」で保存を消してWelcomeへ戻れる
 
-index.html
-css/style.css
-js/app.js
-assets/images/
-
-写真を差し替える場合:
-assets/images/welcome.jpg を置くだけでWelcome背景に使われます。
+GitHubへの入れ方:
+このフォルダの中身を project-lady の Upload files に全部入れて Commit changes。
+既存の index.html / css/style.css / js/app.js は上書きでOK。
