@@ -2,12 +2,27 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f4f1ea">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#e9e5dc">
 
   <title>Project Lady</title>
 
   <style>
+    :root {
+      --paper: #f3f0e9;
+      --ink: #343632;
+      --soft-ink: #70736c;
+      --line: rgba(255,255,255,.55);
+      --glass: rgba(244, 241, 234, .90);
+      --accent: #4b544d;
+      --white: #ffffff;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -15,7 +30,10 @@
     html,
     body {
       margin: 0;
+      width: 100%;
       min-height: 100%;
+      background: var(--paper);
+      color: var(--ink);
     }
 
     body {
@@ -26,153 +44,1000 @@
         "Hiragino Kaku Gothic ProN",
         "Yu Gothic",
         sans-serif;
-
-      background: #f4f1ea;
-      color: #343532;
     }
 
-    .welcome {
+    button {
+      font: inherit;
+    }
+
+    /*
+      ↓↓↓ あとで本番写真へ差し替える場所 ↓↓↓
+
+      今は仮で海の写真を使っています。
+
+      background-image:
+        linear-gradient(...),
+        url("ここを本番写真のURLへ変更");
+
+    */
+
+    .app {
+      position: relative;
+      width: 100%;
       min-height: 100svh;
+
+      overflow: hidden;
+
+      background-image:
+        linear-gradient(
+          180deg,
+          rgba(25, 33, 28, .08) 0%,
+          rgba(25, 33, 28, .16) 40%,
+          rgba(25, 33, 28, .48) 100%
+        ),
+        url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85");
+
+      background-size: cover;
+      background-position: center;
+    }
+
+    .top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
+      justify-content: space-between;
+
+      padding:
+        max(22px, env(safe-area-inset-top))
+        22px
+        0;
+
+      z-index: 10;
+
+      color: var(--white);
     }
 
-    .content {
-      width: min(100%, 480px);
-      text-align: center;
+    .brand {
+      font-family:
+        "Courier New",
+        monospace;
+
+      font-size: 13px;
+      letter-spacing: .13em;
     }
 
-    .eyebrow {
-      margin: 0 0 22px;
-      font-family: Georgia, "Times New Roman", serif;
+    .skip {
+      border: 0;
+      padding: 9px 4px;
+
+      background: transparent;
+      color: rgba(255,255,255,.82);
+
       font-size: 12px;
-      letter-spacing: 0.22em;
+      letter-spacing: .04em;
+
+      cursor: pointer;
+    }
+
+    .stage {
+      width: 100%;
+      min-height: 100svh;
+
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+
+      padding:
+        100px
+        16px
+        max(18px, env(safe-area-inset-bottom));
+
+      opacity: 0;
+      transform: translateY(14px);
+
+      transition:
+        opacity .45s ease,
+        transform .45s ease;
+    }
+
+    .stage.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .sheet {
+      width: min(100%, 520px);
+
+      padding: 26px 22px 22px;
+
+      border: 1px solid rgba(255,255,255,.40);
+      border-radius: 28px;
+
+      background: var(--glass);
+
+      box-shadow:
+        0 22px 70px rgba(22, 29, 25, .18);
+
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+
+    .tiny {
+      margin: 0 0 15px;
+
+      font-family:
+        "Courier New",
+        monospace;
+
+      color: var(--soft-ink);
+
+      font-size: 11px;
+      letter-spacing: .16em;
       text-transform: uppercase;
-      color: #77786f;
     }
 
     h1 {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(42px, 12vw, 68px);
-      font-weight: 400;
-      letter-spacing: -0.035em;
-      line-height: 1;
+
+      font-size: clamp(28px, 8vw, 39px);
+      font-weight: 500;
+
+      line-height: 1.45;
+      letter-spacing: -.02em;
     }
 
-    .line {
-      width: 42px;
-      height: 1px;
-      margin: 32px auto;
-      background: #9b9b91;
-    }
+    .lead {
+      margin: 14px 0 0;
 
-    .message {
-      margin: 0;
-      font-size: 15px;
-      line-height: 2;
-      letter-spacing: 0.04em;
-    }
+      color: var(--soft-ink);
 
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-
-      margin-top: 42px;
-      min-width: 220px;
-      padding: 16px 28px;
-
-      border: 1px solid #66685f;
-      border-radius: 999px;
-
-      background: transparent;
-      color: #343532;
-
-      font: inherit;
       font-size: 14px;
-      letter-spacing: 0.08em;
+      line-height: 1.9;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+
+      margin-top: 24px;
+    }
+
+    .choice {
+      width: 100%;
+
+      padding: 15px 17px;
+
+      border: 1px solid rgba(65, 72, 67, .15);
+      border-radius: 18px;
+
+      background: rgba(255,255,255,.68);
+      color: var(--ink);
+
+      text-align: left;
 
       cursor: pointer;
+
       transition:
-        background 180ms ease,
-        color 180ms ease,
-        transform 180ms ease;
+        transform .15s ease,
+        border-color .15s ease,
+        background .15s ease;
     }
 
-    .button:hover {
-      background: #343532;
-      color: #f4f1ea;
+    .choice:hover {
+      border-color: rgba(65, 72, 67, .38);
+      background: rgba(255,255,255,.90);
     }
 
-    .button:active {
-      transform: scale(0.98);
+    .choice:active {
+      transform: scale(.985);
     }
 
-    .arrow {
-      font-size: 18px;
-      transition: transform 180ms ease;
+    .choice-main {
+      display: block;
+
+      font-size: 15px;
+      font-weight: 500;
     }
 
-    .button:hover .arrow {
-      transform: translateX(4px);
-    }
+    .choice-sub {
+      display: block;
 
-    .note {
-      margin-top: 56px;
-      font-family: Georgia, "Times New Roman", serif;
+      margin-top: 3px;
+
+      color: var(--soft-ink);
+
       font-size: 11px;
-      letter-spacing: 0.12em;
-      color: #888980;
     }
 
-    @media (max-width: 480px) {
-      .welcome {
-        padding: 32px 22px;
+    .start-button {
+      width: 100%;
+
+      margin-top: 28px;
+      padding: 15px 18px;
+
+      border: 0;
+      border-radius: 999px;
+
+      background: var(--accent);
+      color: var(--white);
+
+      cursor: pointer;
+
+      font-size: 14px;
+      letter-spacing: .06em;
+
+      transition:
+        transform .15s ease,
+        opacity .15s ease;
+    }
+
+    .start-button:active {
+      transform: scale(.985);
+    }
+
+    .back {
+      width: 100%;
+
+      margin-top: 8px;
+      padding: 11px;
+
+      border: 0;
+
+      background: transparent;
+      color: var(--soft-ink);
+
+      font-size: 12px;
+
+      cursor: pointer;
+    }
+
+    .progress {
+      display: flex;
+      gap: 7px;
+
+      margin-bottom: 20px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: rgba(67,72,68,.18);
+
+      transition:
+        width .25s ease,
+        background .25s ease;
+    }
+
+    .dot.active {
+      width: 22px;
+
+      border-radius: 999px;
+
+      background: var(--accent);
+    }
+
+    .final-message {
+      margin: 18px 0 4px;
+
+      font-size: clamp(22px, 7vw, 30px);
+      line-height: 1.6;
+    }
+
+    .footer-message {
+      margin-top: 27px;
+
+      font-family:
+        "Courier New",
+        monospace;
+
+      color: var(--soft-ink);
+
+      font-size: 10px;
+      letter-spacing: .08em;
+    }
+
+    @media (min-width: 760px) {
+
+      .stage {
+        justify-content: flex-start;
+        align-items: center;
+
+        padding-left: 8vw;
       }
 
-      .message {
-        font-size: 14px;
+      .sheet {
+        padding: 34px 34px 28px;
+      }
+
+      .choices {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .intro .choices {
+        display: block;
       }
     }
+
   </style>
 </head>
 
 <body>
 
-  <main class="welcome">
-    <div class="content">
+  <main class="app">
 
-      <p class="eyebrow">A journey begins</p>
+    <header class="top">
 
-      <h1>Project Lady</h1>
+      <div class="brand">
+        Project Lady
+      </div>
 
-      <div class="line"></div>
-
-      <p class="message">
-        旅の前から、旅の途中も、旅のあとも。<br>
-        一緒に旅をする場所。
-      </p>
-
-      <button class="button" type="button" id="startButton">
-        旅をはじめる
-        <span class="arrow">→</span>
+      <button
+        class="skip"
+        id="skipButton"
+        type="button"
+      >
+        スキップ
       </button>
 
-      <p class="note">
-        This app is also on a journey.
-      </p>
+    </header>
 
-    </div>
+    <section
+      class="stage active"
+      id="stage"
+    >
+
+      <div
+        class="sheet"
+        id="sheet"
+      >
+      </div>
+
+    </section>
+
   </main>
 
   <script>
-    document.getElementById("startButton").addEventListener("click", function () {
-      this.innerHTML = '旅は、ここから。 <span class="arrow">→</span>';
-    });
+
+    /*
+      Welcome Flow v0.4
+
+      今回は画面遷移の体験を確認する版。
+
+      選択内容は将来、
+      Home・ホテル提案・コンシェルジュなどへ
+      引き継ぐ予定。
+    */
+
+    const answers = {
+      party: null,
+      mood: null,
+      stage: null
+    };
+
+
+    const screens = [
+
+      /* 0 ------------------------------------ */
+
+      {
+        type: "intro",
+
+        eyebrow:
+          "A journey begins",
+
+        title:
+          "今回は、どんな旅ですか？",
+
+        text:
+          "まだ何も決まっていなくても大丈夫。<br>ここから、少しずつ。"
+      },
+
+
+      /* 1 ------------------------------------ */
+
+      {
+        key:
+          "party",
+
+        eyebrow:
+          "About this journey",
+
+        title:
+          "誰と景色を見に行きますか？",
+
+        text:
+          "人数がわかると、ホテルや旅の提案も少し変わります。",
+
+        choices: [
+
+          {
+            label:
+              "一人旅",
+
+            value:
+              "solo"
+          },
+
+          {
+            label:
+              "二人旅",
+
+            value:
+              "pair"
+          },
+
+          {
+            label:
+              "ワイワイ旅",
+
+            value:
+              "group"
+          },
+
+          {
+            label:
+              "まだ決めてない",
+
+            value:
+              "later"
+          }
+
+        ]
+      },
+
+
+      /* 2 ------------------------------------ */
+
+      {
+        key:
+          "mood",
+
+        eyebrow:
+          "Mood",
+
+        title:
+          "どんな時間を過ごしたい？",
+
+        text:
+          "正解はありません。今回は、なんとなくで。",
+
+        choices: [
+
+          {
+            label:
+              "のんびり",
+
+            value:
+              "slow"
+          },
+
+          {
+            label:
+              "アクティブ",
+
+            value:
+              "active"
+          },
+
+          {
+            label:
+              "どっちも",
+
+            value:
+              "mix"
+          },
+
+          {
+            label:
+              "まだわからない",
+
+            value:
+              "later"
+          }
+
+        ]
+      },
+
+
+      /* 3 ------------------------------------ */
+
+      {
+        key:
+          "stage",
+
+        eyebrow:
+          "Right now",
+
+        title:
+          "旅は、どこまで決まってる？",
+
+        text:
+          "最初から全部そろっていなくて大丈夫。今必要なところから始めよう。",
+
+        choices: [
+
+          {
+            label:
+              "これから考える",
+
+            value:
+              "planning"
+          },
+
+          {
+            label:
+              "交通は決まってる",
+
+            value:
+              "transport"
+          },
+
+          {
+            label:
+              "ホテルは決まってる",
+
+            value:
+              "hotel"
+          },
+
+          {
+            label:
+              "だいたい決まってる",
+
+            value:
+              "mostly"
+          },
+
+          {
+            label:
+              "今、旅の途中",
+
+            value:
+              "traveling"
+          },
+
+          {
+            label:
+              "思い出を残したい",
+
+            value:
+              "memory"
+          }
+
+        ]
+      },
+
+
+      /* 4 ------------------------------------ */
+
+      {
+        type:
+          "final",
+
+        eyebrow:
+          "Ready"
+      }
+
+    ];
+
+
+    let currentScreen = 0;
+
+
+    const sheet =
+      document.getElementById("sheet");
+
+    const stage =
+      document.getElementById("stage");
+
+    const skipButton =
+      document.getElementById("skipButton");
+
+
+    function makeProgress() {
+
+      let html =
+        '<div class="progress">';
+
+      for (
+        let i = 1;
+        i <= 3;
+        i++
+      ) {
+
+        html += `
+          <span
+            class="dot
+            ${currentScreen === i ? "active" : ""}
+            "
+          ></span>
+        `;
+
+      }
+
+      html +=
+        "</div>";
+
+      return html;
+
+    }
+
+
+    function finalMessage() {
+
+      const party =
+        answers.party;
+
+      const mood =
+        answers.mood;
+
+
+      const messages = {
+
+        "solo-slow":
+          "自分のペースで、よい旅を。",
+
+        "solo-active":
+          "行きたいところへ、思いきり。",
+
+        "pair-slow":
+          "一緒に過ごす時間を、ゆっくり。",
+
+        "pair-active":
+          "二人で、たくさんの景色を。",
+
+        "group-slow":
+          "みんなで、気の向くままに。",
+
+        "group-active":
+          "笑って、動いて、最高の旅へ。"
+
+      };
+
+
+      const key =
+        `${party}-${mood}`;
+
+
+      return (
+        messages[key]
+        ||
+        "今回の旅を、楽しもう。"
+      );
+
+    }
+
+
+    function render() {
+
+      const screen =
+        screens[currentScreen];
+
+
+      /*
+        最終画面ではスキップを隠す
+      */
+
+      skipButton.style.display =
+        screen.type === "final"
+        ? "none"
+        : "block";
+
+
+      /*
+        一度少し消してから
+        次の場面を表示
+      */
+
+      stage.classList.remove(
+        "active"
+      );
+
+
+      setTimeout(() => {
+
+        /*
+          INTRO
+        */
+
+        if (
+          screen.type === "intro"
+        ) {
+
+          sheet.className =
+            "sheet intro";
+
+
+          sheet.innerHTML = `
+
+            <p class="tiny">
+              ${screen.eyebrow}
+            </p>
+
+            <h1>
+              ${screen.title}
+            </h1>
+
+            <p class="lead">
+              ${screen.text}
+            </p>
+
+            <button
+              class="start-button"
+              id="startButton"
+              type="button"
+            >
+              旅をはじめる
+            </button>
+
+            <p class="footer-message">
+              This app is also on a journey.
+            </p>
+
+          `;
+
+
+          document
+            .getElementById(
+              "startButton"
+            )
+            .addEventListener(
+              "click",
+              next
+            );
+
+        }
+
+
+        /*
+          FINAL
+        */
+
+        else if (
+          screen.type === "final"
+        ) {
+
+          sheet.className =
+            "sheet";
+
+
+          sheet.innerHTML = `
+
+            <p class="tiny">
+              ${screen.eyebrow}
+            </p>
+
+            <p class="final-message">
+              ${finalMessage()}
+            </p>
+
+            <button
+              class="start-button"
+              id="homeButton"
+              type="button"
+            >
+              旅のホームへ
+            </button>
+
+            <button
+              class="back"
+              id="backButton"
+              type="button"
+            >
+              ひとつ戻る
+            </button>
+
+            <p class="footer-message">
+              Thank you for traveling with us.
+            </p>
+
+          `;
+
+
+          document
+            .getElementById(
+              "homeButton"
+            )
+            .addEventListener(
+              "click",
+              () => {
+
+                alert(
+                  "次はここから、Project Ladyのホームへつながります。"
+                );
+
+              }
+            );
+
+
+          document
+            .getElementById(
+              "backButton"
+            )
+            .addEventListener(
+              "click",
+              back
+            );
+
+        }
+
+
+        /*
+          QUESTION
+        */
+
+        else {
+
+          sheet.className =
+            "sheet";
+
+
+          const choices =
+            screen.choices
+              .map(
+
+                choice => `
+
+                  <button
+                    class="choice"
+                    type="button"
+                    data-value="${choice.value}"
+                  >
+
+                    <span class="choice-main">
+                      ${choice.label}
+                    </span>
+
+                  </button>
+
+                `
+
+              )
+              .join("");
+
+
+          sheet.innerHTML = `
+
+            ${makeProgress()}
+
+            <p class="tiny">
+              ${screen.eyebrow}
+            </p>
+
+            <h1>
+              ${screen.title}
+            </h1>
+
+            <p class="lead">
+              ${screen.text}
+            </p>
+
+            <div class="choices">
+              ${choices}
+            </div>
+
+            <button
+              class="back"
+              id="backButton"
+              type="button"
+            >
+              ひとつ戻る
+            </button>
+
+          `;
+
+
+          document
+            .querySelectorAll(
+              ".choice"
+            )
+            .forEach(
+
+              button => {
+
+                button
+                  .addEventListener(
+                    "click",
+                    () => {
+
+                      answers[
+                        screen.key
+                      ] =
+                        button.dataset.value;
+
+                      next();
+
+                    }
+                  );
+
+              }
+
+            );
+
+
+          document
+            .getElementById(
+              "backButton"
+            )
+            .addEventListener(
+              "click",
+              back
+            );
+
+        }
+
+
+        requestAnimationFrame(
+          () => {
+            stage.classList.add(
+              "active"
+            );
+          }
+        );
+
+      }, 220);
+
+    }
+
+
+    function next() {
+
+      if (
+        currentScreen
+        <
+        screens.length - 1
+      ) {
+
+        currentScreen++;
+
+        render();
+
+      }
+
+    }
+
+
+    function back() {
+
+      if (
+        currentScreen > 0
+      ) {
+
+        currentScreen--;
+
+        render();
+
+      }
+
+    }
+
+
+    skipButton.addEventListener(
+      "click",
+      () => {
+
+        currentScreen =
+          screens.length - 1;
+
+        render();
+
+      }
+    );
+
+
+    /*
+      最初の画面表示
+    */
+
+    render();
+
   </script>
 
 </body>
