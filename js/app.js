@@ -47,15 +47,15 @@ function renderHome(){
  sheet.className="";
  sheet.innerHTML=`<section class="home">
    <div class="home-hero"><div class="home-hero-inner">
-    <p class="home-kicker">PROJECT LADY / JOURNEY 01</p>
-    <h1 class="home-title">大阪・紀南<br>3泊4日の旅</h1>
-    <p class="home-date">2026.11.19 — 11.22</p>
+    <p class="home-kicker">PROJECT LADY / JOURNEY</p>
+    <h1 class="home-title">今回の旅</h1>
+    <p class="home-date">旅先は、まだ登録されていません。</p>
     <span class="home-status">Planning</span>
    </div></div>
    <div class="home-body">
     <p class="home-intro">${partyCopy(profile.party)||"旅の続きを、ここから。"}</p>
     <div class="home-grid">${cards.map(c=>`<button class="home-card" data-page="${c[1]}"><small>${c[0]}</small><strong>${c[1]}</strong><span>${c[2]}</span></button>`).join("")}</div>
-    <p class="home-note">This app is also on a journey.<br>このアプリも旅の途中です。</p>
+    <p class="home-note"><span class="home-note-en">This app is also on a journey.</span><span class="home-note-ja">このアプリも旅の途中です。</span></p>
    </div>
  </section>`;
  document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>renderPlaceholder(b.dataset.page));

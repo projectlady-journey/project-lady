@@ -1,9 +1,14 @@
-Project Lady v0.8.2 / Catchcopy Bug Fix
+Project Lady v1.0 / Home v0.2
 
-・質問途中で海上キャッチが一瞬出るバグを修正
-・選択クリック時に即座にキャッチを消去
-・画面切替の遅延処理内でも再度キャッチを消去
-・海上キャッチはREADY画面でのみ初表示
-・v0.8.1の修正内容は維持
+基盤: v0.8.2 完全版
 
-ZIP展開 → 中身を全部Upload files → Commit changes
+今回の変更
+- HomeをWelcomeより少し明るく軽い背景色へ
+- 写真と本文の境界をやわらかく接続
+- Homeカードを少し軽く
+- Footerは英語を主役、日本語を控えめに
+- ユーザー未選択の大阪・紀南ダミー表示を撤去
+- 行き先未登録時は「今回の旅 / 旅先は、まだ登録されていません。」と表示
+- 保存 / WELCOME BACK / Welcome Flow / Homeへの導線は維持
+
+GitHub: ZIP展開 → 中身をUpload files → Commit changes
