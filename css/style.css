@@ -276,3 +276,43 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 }
 .transport-flow.is-collapsed{display:none;}
 .transport-flow.is-open{display:block;}
+
+
+/* v1.6 Home flow - open-ended journey entry */
+.home-start-card{
+  width:100%;
+  margin:0 0 14px;
+  padding:20px 20px 19px;
+  border:1px solid rgba(65,72,67,.13);
+  border-radius:22px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 10px 30px rgba(40,45,40,.055);
+  color:var(--ink);
+  text-align:left;
+  cursor:pointer;
+}
+.home-start-card small{
+  display:block;
+  margin-bottom:12px;
+  font:10px "Courier New",monospace;
+  letter-spacing:.14em;
+  color:#8e938b;
+}
+.home-start-card strong{
+  display:block;
+  font-size:21px;
+  font-weight:500;
+  line-height:1.4;
+}
+.home-start-card span{
+  display:block;
+  margin-top:7px;
+  color:var(--soft);
+  font-size:13px;
+  line-height:1.65;
+}
+.home-start-card:hover{border-color:rgba(65,72,67,.25);background:#fff}
+@media(min-width:760px){
+  .home-start-card{padding:22px 24px}
+  .home-start-card strong{font-size:23px}
+}

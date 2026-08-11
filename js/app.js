@@ -59,12 +59,15 @@ function renderHome(){
    </div></div>
    <div class="home-body">
     <p class="home-intro">${partyCopy(profile.party)||"旅の続きを、ここから。"}</p>
+    ${profile.stage==="planning"?`<button class="home-start-card" id="homeStartJourney" type="button"><small>START</small><strong>何から考える？</strong><span>気分・体験・予算・日数から、今の旅を少しずつ。</span></button>`:""}
     <div class="home-grid">${cards.map(c=>`<button class="home-card" data-page="${c[1]}"><small>${c[0]}</small><strong>${c[1]}</strong><span>${c[2]}</span></button>`).join("")}</div>
     <button class="journey-review-link" id="reviewJourney" type="button">旅のはじまりを見直す</button>
     <p class="home-note"><span class="home-note-en">This app is also on a journey.</span><span class="home-note-ja">このアプリも旅の途中です。</span></p>
    </div>
  </section>`;
  document.getElementById("reviewJourney").onclick=()=>{currentScreen=1;render()};
+ const homeStartJourney=document.getElementById("homeStartJourney");
+ if(homeStartJourney) homeStartJourney.onclick=renderDestinationStart;
  document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>{
    if(b.dataset.page==="交通") renderTransport();
    else renderPlaceholder(b.dataset.page);
@@ -97,7 +100,6 @@ function routeTools(id){if(id==="leg1")return ["yahoo","maps","skyscanner","flig
 function renderTransport(){
  saveUiState("transport");
  const profile=load()||answers;
- if(profile.stage==="planning"){renderDestinationStart();return;}
  app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";const data=loadTransport();
  sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="transportHome">←</button><div><p class="inside-kicker">PROJECT LADY / ROUTE</p><h1>交通</h1></div></header><div class="transport-wrap">
  <section class="transport-intro"><p class="transport-lead">まず、どう行くかを見る。</p><p class="transport-note">経路を見て、候補を比べて、最後に公式条件を確認する。予約先のURLを手入力する必要はありません。</p></section>
@@ -124,10 +126,10 @@ function renderDestinationStart(){
   ["BUDGET","予算から決める","無理のない範囲から、行ける場所を。"],
   ["DAYS","日数から決める","使える時間に合う旅を。"]
  ];
- sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="destinationHome">←</button><div><p class="inside-kicker">PROJECT LADY / JOURNEY</p><h1>旅先を考える</h1></div></header><div class="transport-wrap">
- <section class="destination-intro"><p class="transport-lead">まだ決まっていなくて、大丈夫。</p><p class="transport-note">先に交通を決めなくても大丈夫。今の気分に近いところから、旅先を考えていこう。</p></section>
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="destinationHome">←</button><div><p class="inside-kicker">PROJECT LADY / JOURNEY</p><h1>旅のことを考える</h1></div></header><div class="transport-wrap">
+ <section class="destination-intro"><p class="transport-lead">まだ決まっていなくて、大丈夫。</p><p class="transport-note">何から考える？</p></section>
  <div class="destination-ways">${ways.map(w=>`<button class="destination-way" type="button"><small>${w[0]}</small><strong>${w[1]}</strong><span>${w[2]}</span></button>`).join("")}</div>
- <p class="destination-later">旅先や方面が見えてきたら、交通の検索や比較へ進めます。</p>
+ <p class="destination-later">気になることが見えてきたら、必要なものを少しずつ使えます。</p>
  <p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
  document.getElementById("destinationHome").onclick=renderHome;
 }
