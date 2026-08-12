@@ -9,7 +9,7 @@ const screens=[
 {label:"のんびり",sub:"余白も旅のうち。",value:"slow"},{label:"アクティブ",sub:"行きたいところへ。",value:"active"},{label:"どっちも",sub:"気分のままに。",value:"mix"},{label:"まだわからない",sub:"その日の気分で。",value:"later"}]},
 {key:"stage",eyebrow:"Right now",title:"旅は、どこまで決まってる？",text:"最初から全部そろってなくて大丈夫。今必要なところから始めよう。",choices:[
 {label:"これから考える",sub:"まだ予定はほとんど決まってない",value:"planning"},{label:"一部だけ決まってる",sub:"ホテル1泊だけ、交通だけ…みたいな旅",value:"partial"},{label:"だいたい決まってる",sub:"あとは細かいところを整えたい",value:"mostly"},{label:"今、旅の途中",sub:"今日必要な情報をすぐ見たい",value:"traveling"},{label:"思い出を残したい",sub:"終わった旅をゆっくり振り返りたい",value:"memory"}]},
-{type:"known",eyebrow:"Already decided",title:"もう決まっていること、教えてください。",text:"決まっているところは、そのまま引き継ぎます。まだのところだけ、あとで一緒に考えよう。",choices:[
+{type:"known",eyebrow:"Already decided",title:"もう決まっていることを教えてください。",text:"決まっているところは、そのまま引き継ぎます。まだのところだけ、あとで一緒に考えよう。",choices:[
 {label:"行き先・方面",value:"destination"},{label:"日程",value:"dates"},{label:"交通",value:"transport"},{label:"ホテル・宿",value:"stay"},{label:"やりたいこと・行きたい場所",value:"plans"},{label:"チケット・予約済みの予定",value:"bookings"}]},
 {type:"final",eyebrow:"Ready"}];
 let currentScreen=0;
