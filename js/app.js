@@ -8,8 +8,8 @@ const screens=[
 {key:"mood",compact:true,eyebrow:"Mood",title:"どんな時間を過ごしたい？",text:"今回は、なんとなくで大丈夫。",choices:[
 {label:"のんびり",sub:"余白も旅のうち。",value:"slow"},{label:"アクティブ",sub:"行きたいところへ。",value:"active"},{label:"どっちも",sub:"気分のままに。",value:"mix"},{label:"まだわからない",sub:"その日の気分で。",value:"later"}]},
 {key:"stage",eyebrow:"Right now",title:"旅は、どこまで決まってる？",text:"最初から全部そろってなくて大丈夫。今必要なところから始めよう。",choices:[
-{label:"これから考える",sub:"まだ予定はほとんど決まってない",value:"planning"},{label:"一部だけ決まってる",sub:"ホテル1泊だけ、交通だけ…みたいな旅",value:"partial"},{label:"だいたい決まってる",sub:"あとは細かいところを整えたい",value:"mostly"},{label:"今、旅の途中",sub:"今日必要な情報をすぐ見たい",value:"traveling"},{label:"思い出を残したい",sub:"終わった旅をゆっくり振り返りたい",value:"memory"}]},
-{type:"known",eyebrow:"Already decided",title:"もう決まっていることを教えてください。",text:"決まっているところは、そのまま引き継ぎます。まだのところだけ、あとで一緒に考えよう。",choices:[
+{label:"なんとなく考えてる",sub:"行き先など、少しだけイメージがある",value:"planning"},{label:"一部だけ決まってる",sub:"ホテル1泊だけ、交通だけ…みたいな旅",value:"partial"},{label:"だいたい決まってる",sub:"あとは細かいところを整えたい",value:"mostly"},{label:"まだ何も決めてない",sub:"ここからゆっくり考えたい",value:"none"},{label:"今、旅の途中",sub:"今日必要な情報をすぐ見たい",value:"traveling"},{label:"思い出を残したい",sub:"終わった旅をゆっくり振り返りたい",value:"memory"}]},
+{type:"known",eyebrow:"Already decided",title:"決まっていることを教えてください。",text:"",choices:[
 {label:"行き先・方面",value:"destination"},{label:"日程",value:"dates"},{label:"交通",value:"transport"},{label:"ホテル・宿",value:"stay"},{label:"やりたいこと・行きたい場所",value:"plans"},{label:"チケット・予約済みの予定",value:"bookings"}]},
 {type:"final",eyebrow:"Ready"}];
 let currentScreen=0;
@@ -35,7 +35,7 @@ function render(){
   if(s.type==="known"){
    const selected=new Set(Array.isArray(answers.known)?answers.known:[]);
    const ch=s.choices.map(c=>`<button class="choice known-choice ${selected.has(c.value)?"selected":""}" data-value="${c.value}" aria-pressed="${selected.has(c.value)}"><span class="choice-main">${c.label}</span></button>`).join("");
-   sheet.innerHTML=`<button class="card-skip" id="skipKnown">あとで</button><p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><div class="choices compact-four known-choices">${ch}</div><label class="known-note-label" for="knownNote">まとめて書いてもOK</label><textarea class="known-note" id="knownNote" rows="3" placeholder="例：11/19は大阪。翌日は紀伊勝浦、最後は白浜。ホテルはまだ。">${esc(answers.knownNote||"")}</textarea><button class="start-button" id="knownContinue">決まっていることを引き継ぐ</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
+   sheet.innerHTML=`<button class="card-skip" id="skipKnown">あとで</button><p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1>${s.text?`<p class="lead">${s.text}</p>`:""}<div class="choices compact-four known-choices">${ch}</div><label class="known-note-label" for="knownNote">まとめて書いてもOK</label><textarea class="known-note" id="knownNote" rows="3" placeholder="例：11/19は大阪。翌日は紀伊勝浦、最後は白浜。ホテルはまだ。">${esc(answers.knownNote||"")}</textarea><button class="start-button" id="knownContinue">この内容で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
    document.querySelectorAll(".known-choice").forEach(b=>b.onclick=()=>{b.classList.toggle("selected");b.setAttribute("aria-pressed",String(b.classList.contains("selected")));answers.known=[...document.querySelectorAll(".known-choice.selected")].map(x=>x.dataset.value)});
    document.getElementById("knownNote").oninput=e=>answers.knownNote=e.target.value;
    document.getElementById("knownContinue").onclick=next;document.getElementById("skipKnown").onclick=next;document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return
@@ -43,7 +43,7 @@ function render(){
   if(s.type==="final"){showHero(partyCopy(answers.party)||stageCopy(answers.stage)||"旅は、ここから始まる。");sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">この旅を、はじめよう。</p><p class="final-sub">選んだ内容は、あとからいつでも変えられます。</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div><p class="footer-message">Thank you for traveling with us.</p>`;document.getElementById("save").onclick=()=>{save();renderHome()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
   const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
   sheet.innerHTML=`<button class="card-skip" id="skip">スキップ</button>${progress()}<p class="tiny">${s.eyebrow}</p><h1 class="${s.key==="stage"?"stage-question-title":""}">${s.title}</h1><p class="lead">${s.text}</p><div class="choices ${s.compact?"compact-four":""}">${ch}</div><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
-  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;setTimeout(()=>{if(s.key==="stage"&&b.dataset.value!=="mostly"){currentScreen+=2;render()}else next()},170)});
+  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;setTimeout(()=>{if(s.key==="stage"){const v=b.dataset.value;if(["planning","partial","mostly"].includes(v)){next()}else{currentScreen+=2;render()}}else next()},170)});
   document.getElementById("skip").onclick=()=>{currentScreen=screens.length-1;render()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;
  })
 }
