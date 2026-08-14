@@ -23,11 +23,10 @@ function save(){
  patchJourneyWelcome({...answers,savedAt:new Date().toISOString()});
  localStorage.removeItem(LEGACY_PROFILE_KEY);
 }
-function clear(){
- resetJourneyBox();
+function clearWelcomeOnly(){
+ resetJourneyWelcome();
  localStorage.removeItem(LEGACY_PROFILE_KEY);
- localStorage.removeItem(LEGACY_TRANSPORT_KEY);
- localStorage.removeItem(UI_STATE_KEY);
+ // Transport / hotel / itinerary / memo / log data must survive a Welcome reset.
 }
 function migrateLegacyData(){
  const box=loadJourneyBox();
@@ -56,25 +55,25 @@ function stageCopy(s){return({planning:"旅は、ここから始まる。",parti
 function showHero(t){heroCopy.textContent=t||"";heroCopy.classList.toggle("show",!!t)}
 function swap(fn){stage.classList.remove("active");setTimeout(()=>{fn();requestAnimationFrame(()=>stage.classList.add("active"))},330)}
 function progress(){let h='<div class="progress">';for(let i=1;i<=3;i++)h+=`<span class="dot ${currentScreen===i?"active":""}"></span>`;return h+"</div>"}
-function renderReturn(profile){saveUiState("return");app.classList.remove("home-mode");stage.className="stage active";showHero(partyCopy(profile.party));swap(()=>{sheet.className="sheet";sheet.innerHTML=`<p class="tiny">WELCOME BACK</p><p class="final-message">さぁ、どこまで行こうか。</p><p class="final-sub">前に決めた旅の方針は、そのまま残ってるよ。</p><button class="start-button" id="continue">続きから見る</button><div class="secondary-row"><button class="restart" id="reset">旅の方針を決め直す</button></div><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("continue").onclick=renderHome;document.getElementById("reset").onclick=()=>{clear();Object.keys(answers).forEach(k=>answers[k]=null);currentScreen=0;showHero("");render()}})}
+function renderReturn(profile){saveUiState("return");app.classList.remove("home-mode");stage.className="stage active";showHero(partyCopy(profile.party));swap(()=>{sheet.className="sheet";sheet.innerHTML=`<p class="tiny">WELCOME BACK</p><p class="final-message">さぁ、どこまで行こうか。</p><p class="final-sub">前に決めた旅の方針は、そのまま残ってるよ。</p><button class="start-button" id="continue">続きから見る</button><div class="secondary-row"><button class="restart" id="reset">旅の方針を決め直す</button></div><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("continue").onclick=renderHome;document.getElementById("reset").onclick=()=>{Object.assign(answers,profile);currentScreen=1;showHero("");render()}})}
 function render(){
  saveUiState("welcome",{screen:currentScreen});
  app.classList.remove("home-mode");stage.className="stage active";const s=screens[currentScreen];showHero("");
  swap(()=>{
   if(s.type!=="final")showHero("");
   sheet.className="sheet";
-  if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=next;return}
+  if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=next;document.getElementById("midAfter").onclick=()=>{currentScreen=3;render()};return}
   if(s.type==="known"){
    const selected=new Set(Array.isArray(answers.known)?answers.known:[]);
    const ch=s.choices.map(c=>`<button class="choice known-choice ${selected.has(c.value)?"selected":""}" data-value="${c.value}" aria-pressed="${selected.has(c.value)}"><span class="choice-main">${c.label}</span></button>`).join("");
-   sheet.innerHTML=`<button class="card-skip" id="skipKnown">あとで</button><p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1>${s.text?`<p class="lead">${s.text}</p>`:""}<div class="choices compact-four known-choices">${ch}</div><label class="known-note-label" for="knownNote">まとめて書いてもOK</label><textarea class="known-note" id="knownNote" rows="3" placeholder="例：11/19は大阪。翌日は紀伊勝浦、最後は白浜。ホテルはまだ。">${esc(answers.knownNote||"")}</textarea><button class="start-button" id="knownContinue">この内容で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
+   sheet.innerHTML=`<button class="card-skip" id="skipKnown">あとで</button><p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1>${s.text?`<p class="lead">${s.text}</p>`:""}<div class="choices compact-four known-choices">${ch}</div><label class="known-note-label" for="knownNote">まとめて書いてもOK</label><textarea class="known-note" id="knownNote" rows="3" placeholder="例：11/19は大阪。翌日は紀伊勝浦、最後は白浜。ホテルはまだ。">${esc(answers.knownNote||"")}</textarea><button class="start-button" id="knownContinue">この内容で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
    document.querySelectorAll(".known-choice").forEach(b=>b.onclick=()=>{b.classList.toggle("selected");b.setAttribute("aria-pressed",String(b.classList.contains("selected")));answers.known=[...document.querySelectorAll(".known-choice.selected")].map(x=>x.dataset.value)});
    document.getElementById("knownNote").oninput=e=>answers.knownNote=e.target.value;
    document.getElementById("knownContinue").onclick=next;document.getElementById("skipKnown").onclick=next;document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return
   }
-  if(s.type==="final"){showHero(partyCopy(answers.party)||stageCopy(answers.stage)||"旅は、ここから始まる。");sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">この旅を、はじめよう。</p><p class="final-sub">選んだ内容は、あとからいつでも変えられます。</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div><p class="footer-message">Thank you for traveling with us.</p>`;document.getElementById("save").onclick=()=>{save();renderHome()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
+  if(s.type==="final"){const isMidAfter=["traveling","memory"].includes(answers.stage);showHero(isMidAfter?"":(partyCopy(answers.party)||stageCopy(answers.stage)||"旅は、ここから始まる。"));const finalMessage=answers.stage==="traveling"?"今の旅を、ここから。":answers.stage==="memory"?"旅の記録を、ここから。":"この旅を、はじめよう。";sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">${finalMessage}</p><p class="final-sub">選んだ内容は、あとからいつでも変えられます。</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div><p class="footer-message">Thank you for traveling with us.</p>`;document.getElementById("save").onclick=()=>{save();renderHome()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
   const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
-  sheet.innerHTML=`<button class="card-skip" id="skip">スキップ</button>${progress()}<p class="tiny">${s.eyebrow}</p><h1 class="${s.key==="stage"?"stage-question-title":""}">${s.title}</h1><p class="lead">${s.text}</p><div class="choices ${s.compact?"compact-four":""}">${ch}</div><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初に戻る</button></div>`;
+  sheet.innerHTML=`<button class="card-skip" id="skip">スキップ</button>${progress()}<p class="tiny">${s.eyebrow}</p><h1 class="${s.key==="stage"?"stage-question-title":""}">${s.title}</h1><p class="lead">${s.text}</p><div class="choices ${s.compact?"compact-four":""}">${ch}</div><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
   document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;setTimeout(()=>{if(s.key==="stage"){const v=b.dataset.value;if(["planning","partial","mostly"].includes(v)){next()}else{currentScreen+=2;render()}}else next()},170)});
   document.getElementById("skip").onclick=()=>{currentScreen=screens.length-1;render()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;
  })
@@ -193,7 +192,7 @@ function renderPlaceholder(name){
 }
 function next(){if(currentScreen<screens.length-1){currentScreen++;render()}}
 function back(){if(currentScreen>0){currentScreen--;render()}}
-function restart(){currentScreen=0;Object.keys(answers).forEach(k=>answers[k]=null);render()}
+function restart(){clearWelcomeOnly();Object.keys(answers).forEach(k=>answers[k]=null);answers.known=[];answers.knownNote="";currentScreen=0;showHero("");render()}
 function restoreLastLocation(){
  const saved=load();
  const ui=loadUiState();

@@ -73,6 +73,16 @@ function replaceJourneyTransport(items){
   return saveJourneyBox(box);
 }
 
+function resetJourneyWelcome(){
+  const box = loadJourneyBox();
+  box.welcome = null;
+  if(box.trip){
+    box.trip.partyMode = null;
+    box.trip.mood = null;
+  }
+  return saveJourneyBox(box);
+}
+
 function resetJourneyBox(){
   localStorage.removeItem(JOURNEY_BOX_KEY);
   return loadJourneyBox();

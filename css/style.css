@@ -342,3 +342,6 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 @media(min-width:760px){
   .transport-note{max-width:none;white-space:nowrap;}
 }
+
+/* Phase3 v0.2: alternate Welcome entry */
+.start-button-secondary{margin-top:10px;background:rgba(255,255,255,.72);color:var(--accent);border:1px solid rgba(75,83,76,.18);backdrop-filter:blur(6px)}
