@@ -1,4 +1,5 @@
-const STORAGE_KEY="projectLadyJourneyProfile_v07";
+const LEGACY_PROFILE_KEY="projectLadyJourneyProfile_v07";
+const LEGACY_TRANSPORT_KEY="projectLadyTransport_v01";
 const UI_STATE_KEY="projectLadyUiState_v01";
 const answers={party:null,mood:null,stage:null,known:[],knownNote:""};
 const screens=[
@@ -14,9 +15,40 @@ const screens=[
 {type:"final",eyebrow:"Ready"}];
 let currentScreen=0;
 const app=document.getElementById("app"),sheet=document.getElementById("sheet"),stage=document.getElementById("stage"),heroCopy=document.getElementById("heroCopy");
-function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")}catch(e){return null}}
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify({...answers,savedAt:new Date().toISOString()}))}
-function clear(){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(UI_STATE_KEY)}
+function load(){
+ const box=loadJourneyBox();
+ return box?.welcome||null;
+}
+function save(){
+ patchJourneyWelcome({...answers,savedAt:new Date().toISOString()});
+ localStorage.removeItem(LEGACY_PROFILE_KEY);
+}
+function clear(){
+ resetJourneyBox();
+ localStorage.removeItem(LEGACY_PROFILE_KEY);
+ localStorage.removeItem(LEGACY_TRANSPORT_KEY);
+ localStorage.removeItem(UI_STATE_KEY);
+}
+function migrateLegacyData(){
+ const box=loadJourneyBox();
+ try{
+   const legacyProfile=JSON.parse(localStorage.getItem(LEGACY_PROFILE_KEY)||"null");
+   if(legacyProfile && !box.meta?.legacyProfileMigrated){
+     box.welcome={...(box.welcome||{}),...legacyProfile};
+     if(legacyProfile.party) box.trip.partyMode=legacyProfile.party;
+     if(legacyProfile.mood) box.trip.mood=legacyProfile.mood;
+     box.meta={...(box.meta||{}),legacyProfileMigrated:true};
+   }
+ }catch(e){}
+ try{
+   const legacyTransport=JSON.parse(localStorage.getItem(LEGACY_TRANSPORT_KEY)||"null");
+   if(Array.isArray(legacyTransport) && legacyTransport.length && !box.meta?.legacyTransportMigrated){
+     box.transport=legacyTransport;
+     box.meta={...(box.meta||{}),legacyTransportMigrated:true};
+   }
+ }catch(e){}
+ saveJourneyBox(box);
+}
 function saveUiState(page,extra={}){localStorage.setItem(UI_STATE_KEY,JSON.stringify({page,...extra,savedAt:new Date().toISOString()}))}
 function loadUiState(){try{return JSON.parse(localStorage.getItem(UI_STATE_KEY)||"null")}catch(e){return null}}
 function partyCopy(p){return({solo:"今日は、自分の歩幅で。",pair:"同じ景色を、隣で。",group:"寄り道も、思い出も、みんなで。",later:"旅は、ここから始まる。"})[p]||""}
@@ -50,7 +82,9 @@ function render(){
 function renderHome(){
  saveUiState("home");
  app.classList.add("home-mode");showHero("");stage.className="home-stage";
- const profile=load()||answers;
+ const box=loadJourneyBox();
+ const profile=box.welcome||answers;
+ const trip=box.trip||{};
  const cards=[
   ["ROUTE","交通","移動手段を比べる・確認する"],
   ["STAY","ホテル・予約","候補と予約済みをまとめる"],
@@ -63,9 +97,9 @@ function renderHome(){
  sheet.innerHTML=`<section class="home">
    <div class="home-hero"><div class="home-hero-inner">
     <p class="home-kicker">PROJECT LADY / JOURNEY</p>
-    <h1 class="home-title">今回の旅</h1>
-    <p class="home-date">旅先は、まだ登録されていません。</p>
-    <span class="home-status">Planning</span>
+    <h1 class="home-title">${esc(trip.title||"今回の旅")}</h1>
+    <p class="home-date">${esc(formatTripDates(trip.startDate,trip.endDate))} ・ ${esc(trip.destination||"旅先未登録")}</p>
+    <span class="home-status">${esc(homeStatus(profile.stage))}</span>
    </div></div>
    <div class="home-body">
     <p class="home-intro">${partyCopy(profile.party)||"旅の続きを、ここから。"}</p>
@@ -84,7 +118,6 @@ function renderHome(){
  });
 }
 
-const TRANSPORT_KEY="projectLadyTransport_v01";
 const TRANSPORT_LINKS={
  yahoo:{label:"Yahoo!乗換案内",url:"https://transit.yahoo.co.jp/"},
  maps:{label:"Google Maps",url:"https://www.google.com/maps"},
@@ -102,9 +135,17 @@ function defaultTransport(){return [
  {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"レンタカー",time:"",price:"10,000円目安",status:"未予約",memo:"ぬくいレンタカー。勝浦借受→白浜返却。乗り捨て条件・営業時間確認。"},
  {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"横浜",mode:"飛行機",time:"最終便候補",price:"15,000円目安",status:"監視中",memo:"南紀白浜→羽田。最終便軸で確認。"}
 ];}
-function loadTransport(){try{const v=JSON.parse(localStorage.getItem(TRANSPORT_KEY)||"null");return Array.isArray(v)&&v.length?v:defaultTransport();}catch(e){return defaultTransport();}}
-function saveTransport(data){localStorage.setItem(TRANSPORT_KEY,JSON.stringify(data));}
+function loadTransport(){const box=loadJourneyBox();return Array.isArray(box.transport)&&box.transport.length?box.transport:defaultTransport();}
+function saveTransport(data){replaceJourneyTransport(data);}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function formatTripDates(start,end){
+ if(!start&&!end)return "日程未登録";
+ const f=v=>{if(!v)return "";const d=new Date(v+"T00:00:00");return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`};
+ return start===end?f(start):`${f(start)} — ${f(end)}`;
+}
+function homeStatus(stageValue){
+ return ({planning:"Planning",partial:"Planning",mostly:"Almost ready",none:"Planning",traveling:"Traveling",memory:"Memory"})[stageValue]||"Planning";
+}
 function linkButton(key,small=false){const x=TRANSPORT_LINKS[key];return `<a class="${small?"search-chip":"search-tool"}" href="${x.url}" target="_blank" rel="noopener">${x.label}</a>`;}
 function routeTools(id){if(id==="leg1")return ["yahoo","maps","skyscanner","flights","jal"];if(id==="leg2")return ["yahoo","maps","e5489"];if(id==="leg3")return ["maps","nukui"];if(id==="leg4")return ["maps","skyscanner","flights","jal"];return ["yahoo","maps"];}
 function renderTransport(){
@@ -176,4 +217,5 @@ function restoreLastLocation(){
  // Old versions may have no usable location record.
  renderReturn(saved);
 }
+migrateLegacyData();
 restoreLastLocation();
