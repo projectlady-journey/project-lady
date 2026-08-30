@@ -137,6 +137,7 @@ function renderHome(){
  if(homeStartJourney) homeStartJourney.onclick=renderDestinationStart;
  document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>{
    if(b.dataset.page==="交通") renderTransport();
+   else if(b.dataset.page==="ホテル・予約") renderStay();
    else renderPlaceholder(b.dataset.page);
  });
 }
@@ -191,6 +192,25 @@ function renderTransport(){
  document.getElementById("addTransportLeg").onclick=()=>{const fresh=collect();fresh.push({id:`leg${Date.now()}`,label:String(fresh.length+1).padStart(2,"0"),date:"",from:"",to:"",mode:"未定",time:"",price:"",status:"検討中",memo:""});saveTransport(fresh);renderTransport();};
 }
 
+
+function loadStays(){const box=loadJourneyBox();return Array.isArray(box.stays)?box.stays:[];}
+function saveStays(data){replaceJourneyStays(data);}
+function renderStay(){
+ saveUiState("stay");
+ app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
+ const data=loadStays();
+ const statuses=["検討中","候補","保留","未予約","予約予定","予約済み","保険予約","取消済み"];
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="stayHome">←</button><div><p class="inside-kicker">PROJECT LADY / STAY</p><h1>ホテル・予約</h1></div></header><div class="transport-wrap">
+ <section class="transport-intro"><p class="transport-lead">泊まる場所を、ひとつにまとめる。</p><p class="transport-note">予約済みも、保険で押さえた宿も、まだ決めない夜も。同じ旅のデータとして残します。</p></section>
+ <div class="transport-list">${data.map(x=>`<article class="route-card stay-card" data-id="${esc(x.id)}"><div class="route-top"><span class="route-no">${esc(x.label)}</span><input class="route-date" data-field="date" value="${esc(x.date)}" aria-label="宿泊日"></div><label class="route-wide">宿・滞在先<input data-field="name" value="${esc(x.name)}" placeholder="ホテル名・滞在先"></label><label class="route-wide">エリア<input data-field="area" value="${esc(x.area)}" placeholder="大阪・白浜など"></label><div class="route-grid"><label>状態<select data-field="status">${statuses.map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}</select></label><label>料金<input data-field="price" value="${esc(x.price)}" placeholder="例 6,900円"></label></div><label class="route-wide">Memo<textarea data-field="memo" rows="3" placeholder="予約先、取消期限、部屋条件など">${esc(x.memo)}</textarea></label></article>`).join("")}</div>
+ <button class="add-leg" id="addStay">＋ 宿泊先を追加</button>
+ <p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
+ document.getElementById("stayHome").onclick=renderHome;
+ function collect(){const cards=[...document.querySelectorAll(".stay-card")];const fresh=cards.map((card,i)=>{const obj={id:card.dataset.id||`stay${Date.now()}_${i}`,label:String(i+1).padStart(2,"0")};card.querySelectorAll("[data-field]").forEach(el=>obj[el.dataset.field]=el.value);return obj;});saveStays(fresh);return fresh;}
+ document.querySelectorAll(".stay-card [data-field]").forEach(el=>{el.addEventListener("input",collect);el.addEventListener("change",collect);});
+ document.getElementById("addStay").onclick=()=>{const fresh=collect();fresh.push({id:`stay${Date.now()}`,label:String(fresh.length+1).padStart(2,"0"),date:"",name:"",area:"",status:"検討中",price:"",memo:""});saveStays(fresh);renderStay();};
+}
+
 function renderDestinationStart(){
  saveUiState("destination");
  app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
@@ -226,6 +246,7 @@ function restoreLastLocation(){
  if(!saved){currentScreen=0;render();return;}
 
  if(ui?.page==="transport"){renderTransport();return;}
+ if(ui?.page==="stay"){renderStay();return;}
  if(ui?.page==="destination"){renderDestinationStart();return;}
  if(ui?.page==="home"){renderHome();return;}
  if(ui?.page==="placeholder"){renderPlaceholder(ui.name||"今回の旅");return;}
