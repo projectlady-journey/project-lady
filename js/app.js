@@ -1,7 +1,7 @@
 const LEGACY_PROFILE_KEY="projectLadyJourneyProfile_v07";
 const LEGACY_TRANSPORT_KEY="projectLadyTransport_v01";
 const UI_STATE_KEY="projectLadyUiState_v01";
-const answers={party:null,mood:null,stage:null,known:[],knownNote:""};
+const answers={party:null,mood:null,stage:null,entryRoute:null,known:[],knownNote:""};
 const screens=[
 {type:"intro",eyebrow:"A journey begins",title:"今回は、どんな旅ですか？",text:"まだ何も決まっていなくても大丈夫。<br>ここから、少しずつ。"},
 {key:"party",compact:true,eyebrow:"About this journey",title:"誰と景色を見に行く？",text:"人数がわかると、ホテルや旅の提案も少し変わるよ。",choices:[
@@ -12,7 +12,11 @@ const screens=[
 {label:"なんとなく考えてる",sub:"行き先など、少しだけイメージがある",value:"planning"},{label:"一部だけ決まってる",sub:"ホテル1泊だけ、交通だけ…みたいな旅",value:"partial"},{label:"だいたい決まってる",sub:"あとは細かいところを整えたい",value:"mostly"},{label:"まだ何も決めてない",sub:"ここからゆっくり考えたい",value:"none"},{label:"今、旅の途中",sub:"今日必要な情報をすぐ見たい",value:"traveling"},{label:"思い出を残したい",sub:"終わった旅をゆっくり振り返りたい",value:"memory"}]},
 {type:"known",eyebrow:"Already decided",title:"決まっていることを教えてください。",text:"",choices:[
 {label:"行き先・方面",value:"destination"},{label:"日程",value:"dates"},{label:"交通",value:"transport"},{label:"ホテル・宿",value:"stay"},{label:"やりたいこと・行きたい場所",value:"plans"},{label:"チケット・予約済みの予定",value:"bookings"}]},
-{type:"final",eyebrow:"Ready"}];
+{type:"final",eyebrow:"Ready"},
+{type:"midAfter",eyebrow:"Right now",title:"今の旅に、いちばん近いのは？",text:"旅の途中からでも、帰ってきてからでも。今いるところから始められます。",choices:[
+{label:"今、旅の途中",sub:"今日必要な交通や予定をすぐ見たい",value:"traveling"},
+{label:"思い出を残したい",sub:"終わった旅をゆっくり振り返りたい",value:"memory"},
+{label:"これ以降の旅について考える",sub:"この先の予定や行き先を考えたい",value:"future"}]}];
 let currentScreen=0;
 const app=document.getElementById("app"),sheet=document.getElementById("sheet"),stage=document.getElementById("stage"),heroCopy=document.getElementById("heroCopy");
 function load(){
@@ -50,6 +54,18 @@ function migrateLegacyData(){
 }
 function saveUiState(page,extra={}){localStorage.setItem(UI_STATE_KEY,JSON.stringify({page,...extra,savedAt:new Date().toISOString()}))}
 function loadUiState(){try{return JSON.parse(localStorage.getItem(UI_STATE_KEY)||"null")}catch(e){return null}}
+function persistWelcomeDraft(){
+ patchJourneyWelcome({...answers,draft:true,savedAt:new Date().toISOString()});
+}
+function finishMidAfter(value){
+ answers.entryRoute="midAfter";
+ answers.stage=value;
+ persistWelcomeDraft();
+ save();
+ if(value==="traveling"){renderTransport();return;}
+ if(value==="memory"){renderPlaceholder("旅ログ");return;}
+ renderDestinationStart();
+}
 function partyCopy(p){return({solo:"今日は、自分の歩幅で。",pair:"同じ景色を、隣で。",group:"寄り道も、思い出も、みんなで。",later:"旅は、ここから始まる。"})[p]||""}
 function stageCopy(s){return({planning:"旅は、ここから始まる。",partial:"続きは、ゆっくり決めよう。",mostly:"あと少しで、旅になる。",traveling:"今日という旅を、大切に。",memory:"旅が終わっても、残るものを。"})[s]||""}
 function showHero(t){heroCopy.textContent=t||"";heroCopy.classList.toggle("show",!!t)}
@@ -62,19 +78,27 @@ function render(){
  swap(()=>{
   if(s.type!=="final")showHero("");
   sheet.className="sheet";
-  if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=next;document.getElementById("midAfter").onclick=()=>{currentScreen=3;render()};return}
+  if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=()=>{answers.entryRoute="before";persistWelcomeDraft();currentScreen=1;render()};document.getElementById("midAfter").onclick=()=>{answers.entryRoute="midAfter";persistWelcomeDraft();currentScreen=screens.length-1;render()};return}
+  if(s.type==="midAfter"){
+   const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
+   sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><div class="choices">${ch}</div><div class="secondary-row"><button class="back" id="backToEntry">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
+   document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>finishMidAfter(b.dataset.value));
+   document.getElementById("backToEntry").onclick=()=>{currentScreen=0;render()};
+   document.getElementById("restart").onclick=restart;
+   return
+  }
   if(s.type==="known"){
    const selected=new Set(Array.isArray(answers.known)?answers.known:[]);
    const ch=s.choices.map(c=>`<button class="choice known-choice ${selected.has(c.value)?"selected":""}" data-value="${c.value}" aria-pressed="${selected.has(c.value)}"><span class="choice-main">${c.label}</span></button>`).join("");
    sheet.innerHTML=`<button class="card-skip" id="skipKnown">あとで</button><p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1>${s.text?`<p class="lead">${s.text}</p>`:""}<div class="choices compact-four known-choices">${ch}</div><label class="known-note-label" for="knownNote">まとめて書いてもOK</label><textarea class="known-note" id="knownNote" rows="3" placeholder="例：11/19は大阪。翌日は紀伊勝浦、最後は白浜。ホテルはまだ。">${esc(answers.knownNote||"")}</textarea><button class="start-button" id="knownContinue">この内容で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
-   document.querySelectorAll(".known-choice").forEach(b=>b.onclick=()=>{b.classList.toggle("selected");b.setAttribute("aria-pressed",String(b.classList.contains("selected")));answers.known=[...document.querySelectorAll(".known-choice.selected")].map(x=>x.dataset.value)});
-   document.getElementById("knownNote").oninput=e=>answers.knownNote=e.target.value;
+   document.querySelectorAll(".known-choice").forEach(b=>b.onclick=()=>{b.classList.toggle("selected");b.setAttribute("aria-pressed",String(b.classList.contains("selected")));answers.known=[...document.querySelectorAll(".known-choice.selected")].map(x=>x.dataset.value);persistWelcomeDraft()});
+   document.getElementById("knownNote").oninput=e=>{answers.knownNote=e.target.value;persistWelcomeDraft()};
    document.getElementById("knownContinue").onclick=next;document.getElementById("skipKnown").onclick=next;document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return
   }
   if(s.type==="final"){const isMidAfter=["traveling","memory"].includes(answers.stage);showHero(isMidAfter?"":(partyCopy(answers.party)||stageCopy(answers.stage)||"旅は、ここから始まる。"));const finalMessage=answers.stage==="traveling"?"今の旅を、ここから。":answers.stage==="memory"?"旅の記録を、ここから。":"この旅を、はじめよう。";sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><p class="final-message">${finalMessage}</p><p class="final-sub">選んだ内容は、あとからいつでも変えられます。</p><button class="start-button" id="save">この旅の方針で進む</button><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div><p class="footer-message">Thank you for traveling with us.</p>`;document.getElementById("save").onclick=()=>{save();renderHome()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;return}
   const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
   sheet.innerHTML=`<button class="card-skip" id="skip">スキップ</button>${progress()}<p class="tiny">${s.eyebrow}</p><h1 class="${s.key==="stage"?"stage-question-title":""}">${s.title}</h1><p class="lead">${s.text}</p><div class="choices ${s.compact?"compact-four":""}">${ch}</div><div class="secondary-row"><button class="back" id="back">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
-  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;setTimeout(()=>{if(s.key==="stage"){const v=b.dataset.value;if(["planning","partial","mostly"].includes(v)){next()}else{currentScreen+=2;render()}}else next()},170)});
+  document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{showHero("");answers[s.key]=b.dataset.value;persistWelcomeDraft();setTimeout(()=>{if(s.key==="stage"){const v=b.dataset.value;if(["planning","partial","mostly"].includes(v)){next()}else{currentScreen=screens.findIndex(x=>x.type==="final");render()}}else next()},170)});
   document.getElementById("skip").onclick=()=>{currentScreen=screens.length-1;render()};document.getElementById("back").onclick=back;document.getElementById("restart").onclick=restart;
  })
 }
@@ -108,7 +132,7 @@ function renderHome(){
     <p class="home-note"><span class="home-note-en">This app is also on a journey.</span><span class="home-note-ja">このアプリも旅の途中です。</span></p>
    </div>
  </section>`;
- document.getElementById("reviewJourney").onclick=()=>{currentScreen=1;render()};
+ document.getElementById("reviewJourney").onclick=()=>{currentScreen=0;render()};
  const homeStartJourney=document.getElementById("homeStartJourney");
  if(homeStartJourney) homeStartJourney.onclick=renderDestinationStart;
  document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>{

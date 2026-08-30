@@ -6,7 +6,7 @@
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01";
 
 const JOURNEY_SEED = {
-  schemaVersion: "0.1",
+  schemaVersion: "0.2",
   trip: {
     id: "2026-osaka-kinan-1119-1122",
     title: "大阪・紀南3泊4日の旅",
@@ -16,12 +16,17 @@ const JOURNEY_SEED = {
     destination: "大阪・紀南",
     partyMode: "solo",
     mood: "active",
+    readiness: "mostly",
+    entryRoute: "before",
+    knownCategories: ["destination", "dates", "transport", "stay", "plans", "bookings"],
+    knownNote: "",
     mainPhoto: null
   },
   welcome: {
     party: "solo",
     mood: "active",
     stage: "mostly",
+    entryRoute: "before",
     known: ["destination", "dates", "transport", "stay", "plans", "bookings"],
     knownNote: ""
   },
@@ -32,8 +37,8 @@ const JOURNEY_SEED = {
     {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"横浜",mode:"飛行機",time:"最終便候補",price:"15,000円目安",status:"監視中",memo:"南紀白浜→羽田。最終便軸で確認。"}
   ],
   meta: {
-    source: "大阪・紀南3泊4日_旅の台帳_v0.11.4",
-    seededAt: "2026-08-14",
+    source: "大阪・紀南3泊4日_旅の台帳_v0.11.12",
+    seededAt: "2026-08-30",
     updatedAt: null
   }
 };
@@ -64,6 +69,10 @@ function patchJourneyWelcome(profile){
   box.welcome = {...(box.welcome || {}), ...profile};
   if(profile.party) box.trip.partyMode = profile.party;
   if(profile.mood) box.trip.mood = profile.mood;
+  if(profile.stage) box.trip.readiness = profile.stage;
+  if(profile.entryRoute) box.trip.entryRoute = profile.entryRoute;
+  if(Array.isArray(profile.known)) box.trip.knownCategories = [...profile.known];
+  if(typeof profile.knownNote === "string") box.trip.knownNote = profile.knownNote;
   return saveJourneyBox(box);
 }
 
@@ -79,6 +88,10 @@ function resetJourneyWelcome(){
   if(box.trip){
     box.trip.partyMode = null;
     box.trip.mood = null;
+    box.trip.readiness = null;
+    box.trip.entryRoute = null;
+    box.trip.knownCategories = [];
+    box.trip.knownNote = "";
   }
   return saveJourneyBox(box);
 }
