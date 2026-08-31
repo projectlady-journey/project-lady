@@ -345,3 +345,9 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 
 /* Phase3 v0.2: alternate Welcome entry */
 .start-button-secondary{margin-top:10px;background:rgba(255,255,255,.72);color:var(--accent);border:1px solid rgba(75,83,76,.18);backdrop-filter:blur(6px)}
+
+/* Phase3 v0.4.1 lodging status hierarchy */
+.stay-card.is-backup{opacity:.78;border-style:dashed;background:rgba(255,255,255,.58)}
+.stay-status-chip{margin-left:auto;margin-right:10px;font-size:11px;letter-spacing:.04em;color:#6f756f;background:#eef0eb;border:1px solid rgba(70,78,70,.12);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.stay-card.is-backup .stay-status-chip{background:#f3eee6;color:#806d57}
+@media (max-width:720px){.stay-status-chip{font-size:10px;padding:4px 7px;margin-right:6px}}
