@@ -1,12 +1,12 @@
 /*
- * Project Lady / Phase3 Travel Data Box v0.4.1
+ * Project Lady / Phase3 Travel Data Box v0.4.2
  * One journey, one source of truth inside the browser prototype.
- * Current seed values are aligned to the Osaka/Kinan trip sources reviewed on 2026-08-30.
+ * Current seed values are aligned to the Osaka/Kinan trip ledger v0.11.14 reviewed on 2026-09-04.
  */
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01";
 
 const JOURNEY_SEED = {
-  schemaVersion: "0.4.1",
+  schemaVersion: "0.4.2",
   trip: {
     id: "2026-osaka-kinan-1119-1122",
     title: "大阪・紀南3泊4日の旅",
@@ -32,21 +32,22 @@ const JOURNEY_SEED = {
   },
   transport: [
     {id:"leg1",label:"01",date:"11/19",from:"羽田",to:"神戸",mode:"飛行機",time:"09:10 → 10:30",price:"支払済",status:"予約済み",memo:"SKY103。購入・支払済。神戸到着後は大阪へ。"},
-    {id:"leg2",label:"02",date:"11/20",from:"天王寺",to:"新宮",mode:"特急・電車",time:"07:59 → 11:59",price:"",status:"発売待ち",memo:"くろしお1号。海側D席＋電源を優先。座席候補 1号車11D。"},
-    {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"レンタカー",time:"11/21 08:00 → 11/22 11:00",price:"6,600円",status:"予約済み",memo:"ぬくいレンタカー。勝浦借受→白浜返却。"},
-    {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"横浜",mode:"その他",time:"",price:"",status:"候補",memo:"ホワイトビーチシャトル／JAL最終便／11/23帰着の三分岐。"}
+    {id:"leg2",label:"02",date:"11/20",from:"天王寺",to:"新宮",mode:"特急・電車",time:"07:59 → 11:59",price:"WEB早特7候補",status:"発売待ち",memo:"くろしお1号。10/20 10:00発売。第1希望＝5号車17D、第2希望＝2号車17D。海側D＋奇数列＋最後尾＋電源を優先。"},
+    {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"レンタカー",time:"11/21 08:00 → 11/22 11:00",price:"6,600円",status:"予約済み",memo:"ぬくいレンタカー。勝浦借受→白浜返却。乗り捨て無料。"},
+    {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"日根野",mode:"特急・電車",time:"17:20 → 日根野",price:"",status:"発売待ち",memo:"くろしお32号。10/22 10:00発売。窓側優先。17Dが空いていれば候補だが必須ではない。"},
+    {id:"leg5",label:"05",date:"11/22",from:"日根野",to:"関西空港",mode:"特急・電車",time:"→ 19:21頃",price:"",status:"発売待ち",memo:"くろしお32号から関空方面へ乗継。関空19:21頃着を目安。"},
+    {id:"leg6",label:"06",date:"11/22",from:"関西",to:"羽田",mode:"飛行機",time:"21:00 → 22:15",price:"10,690円",status:"予約済み",memo:"ANA98／ANA WINGS。購入・支払済。KIX T1→HND T2。予約番号 EQW7N。"}
   ],
   stays: [
     {id:"stay1",label:"01",date:"11/19",name:"ニッシン・ナンバ・イン",area:"大阪・なんば",status:"予約済み",price:"5,001円",memo:"Agoda予約・支払済み。喫煙ルーム。予約ID 1755191376。"},
     {id:"stay2",label:"02",date:"11/20",name:"ホテル浦島",area:"那智勝浦",status:"予約済み",price:"21,450円",memo:"公式予約・現地払い。16:30前後チェックイン予定。19:00 和DINING祭。"},
-    {id:"stay3",label:"03",date:"11/21",name:"祖母宅",area:"田辺方面",status:"第一希望・確認待ち",price:"",memo:"第一希望。ただし、まだ連絡前のため未確定。連絡後に宿泊可否を決める。"},
+    {id:"stay3",label:"03",date:"11/21",name:"祖母宅",area:"田辺方面",status:"第一希望・確認待ち",price:"",memo:"第一希望。ただし、まだ連絡前のため未確定。10月後半～11月上旬目安に相談。"},
     {id:"stay3b",label:"04",date:"11/21",name:"グランパスSea",area:"白浜",status:"保険予約",price:"9,828円",memo:"11/21の保険宿。11/17まで取消無料。祖母宅泊が決まれば整理する。"},
-    {id:"stay3c",label:"05",date:"11/21",name:"エレガンテ白浜",area:"白浜",status:"保険予約",price:"11,610円＋入湯税150円",memo:"11/21の保険宿。11/18まで取消無料。祖母宅泊が決まれば整理する。"},
-    {id:"stay4",label:"06",date:"11/22",name:"エレガンテ白浜",area:"白浜",status:"延泊保険",price:"10,820円",memo:"11/23朝JAL案用。支払済み。11/19 23:59まで取消無料。11/22に帰る場合は取消。"}
+    {id:"stay3c",label:"05",date:"11/21",name:"エレガンテ白浜",area:"白浜",status:"保険予約",price:"11,610円＋入湯税150円",memo:"11/21の保険宿。11/18まで取消無料。祖母宅泊が決まれば整理する。"}
   ],
   meta: {
-    source: "大阪・紀南3泊4日_旅の台帳_v0.11.12 / 時系列しおり_v0.3 / 宿泊予約監査 2026-08-30",
-    seededAt: "2026-08-30",
+    source: "大阪・紀南3泊4日_旅の台帳_v0.11.14_2026-09-04_旅程最新版反映版",
+    seededAt: "2026-09-04",
     updatedAt: null
   }
 };
@@ -90,8 +91,23 @@ function migrateJourneyBox(saved){
     if(stay2.memo === "19:00 和DINING祭。") stay2.memo = "公式予約・現地払い。16:30前後チェックイン予定。19:00 和DINING祭。";
   }
 
+  // v0.4.1 -> v0.4.2 itinerary sync. Replace only known old defaults; preserve user edits.
+  const oldLeg4 = next.transport && next.transport.find(x => x && x.id === "leg4");
+  const looksLikeOldReturn = oldLeg4 && (
+    oldLeg4.memo === "ホワイトビーチシャトル／JAL最終便／11/23帰着の三分岐。" ||
+    oldLeg4.memo === "南紀白浜→羽田。最終便軸で確認。"
+  );
+  if(looksLikeOldReturn){
+    next.transport = cloneJourneySeed().transport;
+  }
+  const oldLeg2 = next.transport && next.transport.find(x => x && x.id === "leg2");
+  if(oldLeg2 && oldLeg2.memo === "くろしお1号。海側D席＋電源を優先。座席候補 1号車11D。") {
+    Object.assign(oldLeg2, cloneJourneySeed().transport.find(x=>x.id === "leg2"));
+  }
+  // Remove the obsolete 11/22 extension-insurance seed only when it is still the old default.
+  next.stays = next.stays.filter(x => !(x && x.id === "stay4" && x.name === "エレガンテ白浜" && x.status === "延泊保険"));
   next.stays = relabelStays(next.stays);
-  next.schemaVersion = "0.4.1";
+  next.schemaVersion = "0.4.2";
   next.meta = {...(next.meta || {}), source:JOURNEY_SEED.meta.source};
   return next;
 }

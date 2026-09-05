@@ -151,7 +151,8 @@ const TRANSPORT_LINKS={
  e5489:{label:"e5489",url:"https://www.jr-odekake.net/goyoyaku/e5489/"},
  ekinet:{label:"えきねっと",url:"https://www.eki-net.com/"},
  jal:{label:"JAL",url:"https://www.jal.co.jp/jp/ja/"},
- nukui:{label:"ぬくいレンタカー",url:"https://www.nukui-ltd.com/rentacar_katsuura.html"}
+ nukui:{label:"ぬくいレンタカー",url:"https://www.nukui-ltd.com/rentacar_katsuura.html"},
+ ana:{label:"ANA",url:"https://www.ana.co.jp/"}
 };
 function defaultTransport(){return [
  {id:"leg1",label:"01",date:"11/19",from:"横浜",to:"大阪",mode:"飛行機",time:"13:30 → 14:40候補",price:"10,910円目安",status:"監視中",memo:"羽田→伊丹。チケット確保後に予約。"},
@@ -171,7 +172,7 @@ function homeStatus(stageValue){
  return ({planning:"Planning",partial:"Planning",mostly:"Almost ready",none:"Planning",traveling:"Traveling",memory:"Memory"})[stageValue]||"Planning";
 }
 function linkButton(key,small=false){const x=TRANSPORT_LINKS[key];return `<a class="${small?"search-chip":"search-tool"}" href="${x.url}" target="_blank" rel="noopener">${x.label}</a>`;}
-function routeTools(id){if(id==="leg1")return ["yahoo","maps","skyscanner","flights","jal"];if(id==="leg2")return ["yahoo","maps","e5489"];if(id==="leg3")return ["maps","nukui"];if(id==="leg4")return ["maps","skyscanner","flights","jal"];return ["yahoo","maps"];}
+function routeTools(id){if(id==="leg1")return ["yahoo","maps","skyscanner","flights","jal"];if(id==="leg2")return ["yahoo","maps","e5489"];if(id==="leg3")return ["maps","nukui"];if(id==="leg4"||id==="leg5")return ["yahoo","maps","e5489"];if(id==="leg6")return ["maps","ana"];return ["yahoo","maps"];}
 function renderTransport(){
  saveUiState("transport");
  const profile=load()||answers;
