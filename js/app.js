@@ -46,8 +46,14 @@ function migrateLegacyData(){
  try{
    const legacyTransport=JSON.parse(localStorage.getItem(LEGACY_TRANSPORT_KEY)||"null");
    if(Array.isArray(legacyTransport) && legacyTransport.length && !box.meta?.legacyTransportMigrated){
-     box.transport=legacyTransport;
+     // Journey Box is now the source of truth. Import the pre-v0.4 transport only if the
+     // Journey Box has no transport at all; otherwise an old legacy key would overwrite
+     // the newly migrated v0.4.x route on every upgrade.
+     if(!Array.isArray(box.transport) || !box.transport.length){
+       box.transport=legacyTransport;
+     }
      box.meta={...(box.meta||{}),legacyTransportMigrated:true};
+     localStorage.removeItem(LEGACY_TRANSPORT_KEY);
    }
  }catch(e){}
  saveJourneyBox(box);

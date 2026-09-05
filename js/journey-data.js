@@ -1,12 +1,12 @@
 /*
- * Project Lady / Phase3 Travel Data Box v0.4.2
+ * Project Lady / Phase3 Travel Data Box v0.4.3
  * One journey, one source of truth inside the browser prototype.
  * Current seed values are aligned to the Osaka/Kinan trip ledger v0.11.14 reviewed on 2026-09-04.
  */
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01";
 
 const JOURNEY_SEED = {
-  schemaVersion: "0.4.2",
+  schemaVersion: "0.4.3",
   trip: {
     id: "2026-osaka-kinan-1119-1122",
     title: "大阪・紀南3泊4日の旅",
@@ -91,23 +91,35 @@ function migrateJourneyBox(saved){
     if(stay2.memo === "19:00 和DINING祭。") stay2.memo = "公式予約・現地払い。16:30前後チェックイン予定。19:00 和DINING祭。";
   }
 
-  // v0.4.1 -> v0.4.2 itinerary sync. Replace only known old defaults; preserve user edits.
-  const oldLeg4 = next.transport && next.transport.find(x => x && x.id === "leg4");
-  const looksLikeOldReturn = oldLeg4 && (
-    oldLeg4.memo === "ホワイトビーチシャトル／JAL最終便／11/23帰着の三分岐。" ||
-    oldLeg4.memo === "南紀白浜→羽田。最終便軸で確認。"
-  );
-  if(looksLikeOldReturn){
-    next.transport = cloneJourneySeed().transport;
-  }
-  const oldLeg2 = next.transport && next.transport.find(x => x && x.id === "leg2");
-  if(oldLeg2 && oldLeg2.memo === "くろしお1号。海側D席＋電源を優先。座席候補 1号車11D。") {
-    Object.assign(oldLeg2, cloneJourneySeed().transport.find(x=>x.id === "leg2"));
+  // v0.4.3 transport repair.
+  // v0.4.2 relied on exact old memo text, so a browser that had edited/legacy transport
+  // could be marked 0.4.2 while still showing the old route. Detect the stale route by
+  // structure/content instead and sync the six canonical legs for this Osaka/Kinan trip.
+  const transport = Array.isArray(next.transport) ? next.transport : [];
+  const hasAna98 = transport.some(x => x && x.id === "leg6" && x.from === "関西" && x.to === "羽田");
+  const oldReturnToYokohama = transport.some(x => x && x.id === "leg4" && x.to === "横浜");
+  const oldOutboundFromYokohama = transport.some(x => x && x.id === "leg1" && x.from === "横浜");
+  const missingCanonicalLegs = !transport.some(x => x && x.id === "leg5") || !transport.some(x => x && x.id === "leg6");
+  const needsTransportRepair = next.trip?.id === JOURNEY_SEED.trip.id &&
+    (!next.meta?.transportSyncV043) &&
+    (oldReturnToYokohama || oldOutboundFromYokohama || missingCanonicalLegs || !hasAna98);
+
+  if(needsTransportRepair){
+    const canonicalIds = new Set(["leg1","leg2","leg3","leg4","leg5","leg6"]);
+    // Keep only genuinely custom extra legs with some content; discard blank legacy/add-card shells.
+    const customExtras = transport.filter(x => {
+      if(!x || canonicalIds.has(x.id)) return false;
+      return [x.date,x.from,x.to,x.time,x.price,x.memo].some(v => String(v || "").trim());
+    });
+    next.transport = [...cloneJourneySeed().transport, ...customExtras].map((x,i)=>({
+      ...x, label:String(i+1).padStart(2,"0")
+    }));
+    next.meta = {...(next.meta || {}), transportSyncV043:true};
   }
   // Remove the obsolete 11/22 extension-insurance seed only when it is still the old default.
   next.stays = next.stays.filter(x => !(x && x.id === "stay4" && x.name === "エレガンテ白浜" && x.status === "延泊保険"));
   next.stays = relabelStays(next.stays);
-  next.schemaVersion = "0.4.2";
+  next.schemaVersion = "0.4.3";
   next.meta = {...(next.meta || {}), source:JOURNEY_SEED.meta.source};
   return next;
 }
