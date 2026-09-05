@@ -84,7 +84,14 @@ function render(){
  swap(()=>{
   if(s.type!=="final")showHero("");
   sheet.className="sheet";
-  if(s.type==="intro"){sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button><p class="footer-message">This app is also on a journey.</p>`;document.getElementById("start").onclick=()=>{answers.entryRoute="before";persistWelcomeDraft();currentScreen=1;render()};document.getElementById("midAfter").onclick=()=>{answers.entryRoute="midAfter";persistWelcomeDraft();currentScreen=screens.length-1;render()};return}
+  if(s.type==="intro"){
+   const savedCount=listSavedJourneys().length;
+   sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button>${savedCount?`<button class="start-button saved-entry-button" id="openSaved">保存した旅をひらく<span>${savedCount}件</span></button>`:""}<p class="footer-message">This app is also on a journey.</p>`;
+   document.getElementById("start").onclick=()=>{answers.entryRoute="before";persistWelcomeDraft();currentScreen=1;render()};
+   document.getElementById("midAfter").onclick=()=>{answers.entryRoute="midAfter";persistWelcomeDraft();currentScreen=screens.length-1;render()};
+   const openSaved=document.getElementById("openSaved");if(openSaved)openSaved.onclick=()=>renderSavedJourneys({backToWelcome:true});
+   return
+  }
   if(s.type==="midAfter"){
    const ch=s.choices.map(c=>`<button class="choice" data-value="${c.value}"><span class="choice-main">${c.label}</span>${c.sub?`<span class="choice-sub">${c.sub}</span>`:""}</button>`).join("");
    sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><div class="choices">${ch}</div><div class="secondary-row"><button class="back" id="backToEntry">← ひとつ戻る</button><button class="restart" id="restart">最初からやり直す</button></div>`;
@@ -271,11 +278,11 @@ function showJourneyRestartPrompt(){
  overlay.querySelector("#restartCancel").onclick=()=>overlay.remove();
  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
 }
-function renderSavedJourneys(){
- saveUiState("savedJourneys");app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
+function renderSavedJourneys({backToWelcome=false}={}){
+ saveUiState("savedJourneys",{backToWelcome});app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
  const saved=listSavedJourneys();
  sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="savedHome">←</button><div><p class="inside-kicker">PROJECT LADY / SAVED</p><h1>保存した旅</h1></div></header><div class="transport-wrap"><section class="transport-intro"><p class="transport-lead">あとで続きを使える旅。</p><p class="transport-note">終わった旅ではありません。候補や延期した旅も、ここから戻せます。</p></section>${saved.length?`<div class="saved-journey-list">${saved.map(j=>`<article class="saved-journey-card"><div><p class="inside-kicker">SAVED JOURNEY</p><h2>${esc(journeyDisplayName(j))}</h2><p>${esc(formatTripDates(j.trip?.startDate,j.trip?.endDate))}${j.trip?.destination?` ・ ${esc(j.trip.destination)}`:""}</p></div><button class="resume-journey" data-id="${esc(j.trip?.id)}">この旅を再開</button></article>`).join("")}</div>`:`<div class="saved-empty"><p>保存している旅は、まだありません。</p></div>`}<p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
- document.getElementById("savedHome").onclick=renderHome;
+ document.getElementById("savedHome").onclick=()=>{if(backToWelcome){currentScreen=0;render();}else renderHome();};
  document.querySelectorAll(".resume-journey").forEach(b=>b.onclick=()=>{const j=resumeSavedJourney(b.dataset.id);if(!j)return;localStorage.removeItem(UI_STATE_KEY);resetWelcomeAnswers();if(j.welcome)Object.assign(answers,j.welcome);renderHome();});
 }
 
@@ -292,7 +299,7 @@ function restoreLastLocation(){
 
  if(ui?.page==="transport"){renderTransport();return;}
  if(ui?.page==="stay"){renderStay();return;}
- if(ui?.page==="savedJourneys"){renderSavedJourneys();return;}
+ if(ui?.page==="savedJourneys"){renderSavedJourneys({backToWelcome:!!ui.backToWelcome});return;}
  if(ui?.page==="destination"){renderDestinationStart();return;}
  if(ui?.page==="home"){renderHome();return;}
  if(ui?.page==="placeholder"){renderPlaceholder(ui.name||"今回の旅");return;}
