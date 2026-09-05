@@ -135,6 +135,7 @@ function renderHome(){
     ${profile.stage==="planning"?`<button class="home-start-card" id="homeStartJourney" type="button"><small>START</small><strong>何から考える？</strong><span>気分・体験・予算・日数から、今の旅を少しずつ。</span></button>`:""}
     <div class="home-grid">${cards.map(c=>`<button class="home-card" data-page="${c[1]}"><small>${c[0]}</small><strong>${c[1]}</strong><span>${c[2]}</span></button>`).join("")}</div>
     <div class="journey-actions">
+      <p class="journey-actions-label">旅の管理</p>
       <button class="journey-review-link" id="reviewJourney" type="button"><span>旅のはじまりを見直す</span><small>人数・旅の気分・今の状況を変更する</small><b>→</b></button>
       <button class="journey-review-link" id="savedJourneys" type="button"><span>保存した旅</span><small>いったん置いておいた旅を、続きから使う</small><b>→</b></button>
       <button class="journey-review-link journey-reset-link" id="restartJourney" type="button"><span>最初からやり直す</span><small>今の旅を保存して、新しい旅を始めることもできます</small><b>→</b></button>
