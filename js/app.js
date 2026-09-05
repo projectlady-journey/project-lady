@@ -36,20 +36,20 @@ function migrateLegacyData(){
  const box=loadJourneyBox();
  try{
    const legacyProfile=JSON.parse(localStorage.getItem(LEGACY_PROFILE_KEY)||"null");
-   if(legacyProfile && !box.meta?.legacyProfileMigrated){
+   if(legacyProfile && !box.meta?.legacyProfileMigrated && box.meta?.source!=="new journey"){
      box.welcome={...(box.welcome||{}),...legacyProfile};
      if(legacyProfile.party) box.trip.partyMode=legacyProfile.party;
      if(legacyProfile.mood) box.trip.mood=legacyProfile.mood;
      box.meta={...(box.meta||{}),legacyProfileMigrated:true};
    }
+   // Once the registry exists, a legacy profile must never repopulate a future blank journey.
+   localStorage.removeItem(LEGACY_PROFILE_KEY);
  }catch(e){}
  try{
    const legacyTransport=JSON.parse(localStorage.getItem(LEGACY_TRANSPORT_KEY)||"null");
    if(Array.isArray(legacyTransport) && legacyTransport.length && !box.meta?.legacyTransportMigrated){
-     // Journey Box is now the source of truth. Import the pre-v0.4 transport only if the
-     // Journey Box has no transport at all; otherwise an old legacy key would overwrite
-     // the newly migrated v0.4.x route on every upgrade.
-     if(!Array.isArray(box.transport) || !box.transport.length){
+     // Never inject old transport into a deliberately new blank journey.
+     if(box.meta?.source!=="new journey" && (!Array.isArray(box.transport) || !box.transport.length)){
        box.transport=legacyTransport;
      }
      box.meta={...(box.meta||{}),legacyTransportMigrated:true};
