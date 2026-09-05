@@ -1,13 +1,14 @@
 /*
- * Project Lady / Journey Registry v0.5.0
+ * Project Lady / Journey Registry v0.5.3
  * Multiple journeys: one active journey, saved journeys, and a future completed archive.
+ * v0.5.3: do not save navigation-only blank journeys; purge ghost saved journeys created by v0.5.2.
  * v0.4.x single-journey data is migrated without destroying the Osaka/Kinan working trip.
  */
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01"; // legacy single-journey key
 const JOURNEY_REGISTRY_KEY = "projectLadyJourneyRegistry_v01";
 
 const JOURNEY_SEED = {
-  schemaVersion: "0.5.0",
+  schemaVersion: "0.5.3",
   trip: {
     id: "2026-osaka-kinan-1119-1122",
     title: "大阪・紀南3泊4日の旅",
@@ -52,7 +53,7 @@ function cloneJourneySeed(){return deepClone(JOURNEY_SEED);}
 function makeJourneyId(){return `journey-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;}
 function createBlankJourney(){
   const now=new Date().toISOString();
-  return {schemaVersion:"0.5.0",trip:{id:makeJourneyId(),title:"今回の旅",startDate:"",endDate:"",origin:"",destination:"",partyMode:null,mood:null,readiness:null,entryRoute:null,knownCategories:[],knownNote:"",mainPhoto:null,lifecycle:"active"},welcome:null,transport:[],stays:[],itinerary:[],memos:[],packing:[],logs:[],meta:{source:"new journey",createdAt:now,updatedAt:now}};
+  return {schemaVersion:"0.5.3",trip:{id:makeJourneyId(),title:"今回の旅",startDate:"",endDate:"",origin:"",destination:"",partyMode:null,mood:null,readiness:null,entryRoute:null,knownCategories:[],knownNote:"",mainPhoto:null,lifecycle:"active"},welcome:null,transport:[],stays:[],itinerary:[],memos:[],packing:[],logs:[],meta:{source:"new journey",createdAt:now,updatedAt:now}};
 }
 function relabelStays(items){return (items||[]).map((item,i)=>({...item,label:String(i+1).padStart(2,"0")}));}
 
@@ -77,28 +78,48 @@ function migrateLegacyJourney(saved){
   next.stays=next.stays.filter(x=>!(x&&x.id==="stay4"&&x.name==="エレガンテ白浜"&&x.status==="延泊保険"));
   next.stays=relabelStays(next.stays);
   next.itinerary=Array.isArray(next.itinerary)?next.itinerary:[];next.memos=Array.isArray(next.memos)?next.memos:[];next.packing=Array.isArray(next.packing)?next.packing:[];next.logs=Array.isArray(next.logs)?next.logs:[];
-  next.trip={...next.trip,lifecycle:"active"};next.schemaVersion="0.5.0";next.meta={...(next.meta||{}),migratedToRegistryV050:true};
+  next.trip={...next.trip,lifecycle:"active"};next.schemaVersion="0.5.3";next.meta={...(next.meta||{}),migratedToRegistryV050:true};
   return next;
 }
 
 function loadRegistry(){
-  try{const r=JSON.parse(localStorage.getItem(JOURNEY_REGISTRY_KEY)||"null");if(r&&r.currentJourney&&Array.isArray(r.savedJourneys)){return r;}}catch(e){}
+  try{
+    const r=JSON.parse(localStorage.getItem(JOURNEY_REGISTRY_KEY)||"null");
+    if(r&&r.currentJourney&&Array.isArray(r.savedJourneys)){
+      // v0.5.2 could accidentally save a blank journey after merely opening a Welcome branch.
+      // Remove those navigation-only ghosts on upgrade, but keep any journey with real input.
+      const cleaned=r.savedJourneys.filter(j=>journeyHasMeaningfulData(j));
+      if(cleaned.length!==r.savedJourneys.length || r.schemaVersion!=="0.5.3"){
+        r.savedJourneys=cleaned;
+        r.schemaVersion="0.5.3";
+        r.meta={...(r.meta||{}),ghostSavedJourneysCleanedV053:true,updatedAt:new Date().toISOString()};
+        localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(r));
+      }
+      return r;
+    }
+  }catch(e){}
   let current=null;
   try{const legacy=JSON.parse(localStorage.getItem(JOURNEY_BOX_KEY)||"null");if(legacy&&legacy.trip)current=migrateLegacyJourney(legacy);}catch(e){}
   // A brand-new browser starts blank. Existing v0.4.x users keep their real journey.
   if(!current) current=createBlankJourney();
-  const registry={schemaVersion:"0.5.0",currentJourney:current,savedJourneys:[],completedJourneys:[],meta:{createdAt:new Date().toISOString(),migratedFromSingleJourney:!!localStorage.getItem(JOURNEY_BOX_KEY)}};
+  const registry={schemaVersion:"0.5.3",currentJourney:current,savedJourneys:[],completedJourneys:[],meta:{createdAt:new Date().toISOString(),migratedFromSingleJourney:!!localStorage.getItem(JOURNEY_BOX_KEY)}};
   localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(registry));
   return registry;
 }
-function saveRegistry(registry){registry.schemaVersion="0.5.0";registry.meta={...(registry.meta||{}),updatedAt:new Date().toISOString()};localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(registry));return registry;}
+function saveRegistry(registry){registry.schemaVersion="0.5.3";registry.meta={...(registry.meta||{}),updatedAt:new Date().toISOString()};localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(registry));return registry;}
 function loadJourneyBox(){return loadRegistry().currentJourney;}
-function saveJourneyBox(box){const r=loadRegistry();const next=deepClone(box);next.schemaVersion="0.5.0";next.meta={...(next.meta||{}),updatedAt:new Date().toISOString()};r.currentJourney=next;saveRegistry(r);return next;}
+function saveJourneyBox(box){const r=loadRegistry();const next=deepClone(box);next.schemaVersion="0.5.3";next.meta={...(next.meta||{}),updatedAt:new Date().toISOString()};r.currentJourney=next;saveRegistry(r);return next;}
 function listSavedJourneys(){return deepClone(loadRegistry().savedJourneys||[]);}
 function saveCurrentJourneyForLater(){const r=loadRegistry();const current=deepClone(r.currentJourney);current.trip={...current.trip,lifecycle:"saved"};current.meta={...(current.meta||{}),savedForLaterAt:new Date().toISOString()};const i=r.savedJourneys.findIndex(x=>x.trip?.id===current.trip?.id);if(i>=0)r.savedJourneys[i]=current;else r.savedJourneys.unshift(current);saveRegistry(r);return current;}
 function startNewBlankJourney({saveCurrent=false}={}){const r=loadRegistry();if(saveCurrent){const current=deepClone(r.currentJourney);current.trip={...current.trip,lifecycle:"saved"};current.meta={...(current.meta||{}),savedForLaterAt:new Date().toISOString()};const i=r.savedJourneys.findIndex(x=>x.trip?.id===current.trip?.id);if(i>=0)r.savedJourneys[i]=current;else r.savedJourneys.unshift(current);}r.currentJourney=createBlankJourney();saveRegistry(r);localStorage.removeItem(JOURNEY_BOX_KEY);return r.currentJourney;}
 function resumeSavedJourney(id){const r=loadRegistry();const i=r.savedJourneys.findIndex(x=>x.trip?.id===id);if(i<0)return null;const chosen=deepClone(r.savedJourneys[i]);r.savedJourneys.splice(i,1);const old=deepClone(r.currentJourney);if(journeyHasMeaningfulData(old)){old.trip={...old.trip,lifecycle:"saved"};old.meta={...(old.meta||{}),savedForLaterAt:new Date().toISOString()};const oldIndex=r.savedJourneys.findIndex(x=>x.trip?.id===old.trip?.id);if(oldIndex>=0)r.savedJourneys[oldIndex]=old;else r.savedJourneys.unshift(old);}chosen.trip={...chosen.trip,lifecycle:"active"};r.currentJourney=chosen;saveRegistry(r);return chosen;}
-function journeyHasMeaningfulData(j){if(!j)return false;return !!(j.welcome||j.trip?.destination||j.trip?.startDate||j.trip?.endDate||(j.transport||[]).length||(j.stays||[]).length||(j.itinerary||[]).length||(j.memos||[]).length||(j.packing||[]).length||(j.logs||[]).length);}
+function journeyHasMeaningfulData(j){
+  if(!j)return false;
+  const w=j.welcome||{};
+  // entryRoute / draft / savedAt are navigation state, not travel content.
+  const meaningfulWelcome=!!(w.party||w.mood||w.stage||(Array.isArray(w.known)&&w.known.length)||String(w.knownNote||"").trim());
+  return !!(meaningfulWelcome||j.trip?.destination||j.trip?.startDate||j.trip?.endDate||(j.transport||[]).length||(j.stays||[]).length||(j.itinerary||[]).length||(j.memos||[]).length||(j.packing||[]).length||(j.logs||[]).length);
+}
 function deleteSavedJourney(id){const r=loadRegistry();r.savedJourneys=(r.savedJourneys||[]).filter(x=>x.trip?.id!==id);saveRegistry(r);}
 function patchJourneyWelcome(profile){const box=loadJourneyBox();box.welcome={...(box.welcome||{}),...profile};if(profile.party)box.trip.partyMode=profile.party;if(profile.mood)box.trip.mood=profile.mood;if(profile.stage)box.trip.readiness=profile.stage;if(profile.entryRoute)box.trip.entryRoute=profile.entryRoute;if(Array.isArray(profile.known))box.trip.knownCategories=[...profile.known];if(typeof profile.knownNote==="string")box.trip.knownNote=profile.knownNote;return saveJourneyBox(box);}
 function replaceJourneyTransport(items){const box=loadJourneyBox();box.transport=items;return saveJourneyBox(box);}
