@@ -1,14 +1,14 @@
 /*
- * Project Lady / Journey Registry v0.5.6
+ * Project Lady / Journey Registry v0.5.7
  * Multiple journeys: one active journey, saved journeys, and a future completed archive.
- * v0.5.6: remove semantic duplicates of the active journey from the saved shelf, even when legacy bugs gave the clones different journey IDs.
+ * v0.5.7: purge one-time legacy blank-journey transport contamination and compare journeys semantically without volatile Welcome timestamps.
  * v0.4.x single-journey data is migrated without destroying the Osaka/Kinan working trip.
  */
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01"; // legacy single-journey key
 const JOURNEY_REGISTRY_KEY = "projectLadyJourneyRegistry_v01";
 
 const JOURNEY_SEED = {
-  schemaVersion: "0.5.6",
+  schemaVersion: "0.5.7",
   trip: {
     id: "2026-osaka-kinan-1119-1122",
     title: "大阪・紀南3泊4日の旅",
@@ -53,7 +53,7 @@ function cloneJourneySeed(){return deepClone(JOURNEY_SEED);}
 function makeJourneyId(){return `journey-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;}
 function createBlankJourney(){
   const now=new Date().toISOString();
-  return {schemaVersion:"0.5.6",trip:{id:makeJourneyId(),title:"今回の旅",startDate:"",endDate:"",origin:"",destination:"",partyMode:null,mood:null,readiness:null,entryRoute:null,knownCategories:[],knownNote:"",mainPhoto:null,lifecycle:"active"},welcome:null,transport:[],stays:[],itinerary:[],memos:[],packing:[],logs:[],meta:{source:"new journey",createdAt:now,updatedAt:now}};
+  return {schemaVersion:"0.5.7",trip:{id:makeJourneyId(),title:"今回の旅",startDate:"",endDate:"",origin:"",destination:"",partyMode:null,mood:null,readiness:null,entryRoute:null,knownCategories:[],knownNote:"",mainPhoto:null,lifecycle:"active"},welcome:null,transport:[],stays:[],itinerary:[],memos:[],packing:[],logs:[],meta:{source:"new journey",createdAt:now,updatedAt:now}};
 }
 function relabelStays(items){return (items||[]).map((item,i)=>({...item,label:String(i+1).padStart(2,"0")}));}
 
@@ -78,7 +78,7 @@ function migrateLegacyJourney(saved){
   next.stays=next.stays.filter(x=>!(x&&x.id==="stay4"&&x.name==="エレガンテ白浜"&&x.status==="延泊保険"));
   next.stays=relabelStays(next.stays);
   next.itinerary=Array.isArray(next.itinerary)?next.itinerary:[];next.memos=Array.isArray(next.memos)?next.memos:[];next.packing=Array.isArray(next.packing)?next.packing:[];next.logs=Array.isArray(next.logs)?next.logs:[];
-  next.trip={...next.trip,lifecycle:"active"};next.schemaVersion="0.5.6";next.meta={...(next.meta||{}),migratedToRegistryV050:true};
+  next.trip={...next.trip,lifecycle:"active"};next.schemaVersion="0.5.7";next.meta={...(next.meta||{}),migratedToRegistryV050:true};
   return next;
 }
 
@@ -89,31 +89,21 @@ function journeyHasIdentity(j){
   const t=j?.trip||{};
   return !!((t.title&&t.title!=="今回の旅")||String(t.destination||"").trim()||String(t.startDate||"").trim()||String(t.endDate||"").trim()||String(t.origin||"").trim()||String(t.knownNote||"").trim());
 }
-function looksLikeOsakaSeedPayload(j){
+function hasDefaultJourneyIdentity(j){
+  const t=j?.trip||{};
+  return (!t.title||t.title==="今回の旅")&&!String(t.destination||"").trim()&&!String(t.startDate||"").trim()&&!String(t.endDate||"").trim()&&!String(t.origin||"").trim()&&!String(t.knownNote||"").trim();
+}
+function looksLikeLegacyStaleTransportPayload(j){
   const transport=Array.isArray(j?.transport)?j.transport:[];
-  const stays=Array.isArray(j?.stays)?j.stays:[];
-  const routeHits=[
-    ["羽田","神戸"],["天王寺","新宮"],["紀伊勝浦","白浜"],["白浜","日根野"],["日根野","関西空港"],["関西","羽田"],
-    ["横浜","大阪"],["大阪","紀伊勝浦"],["白浜","横浜"]
-  ].filter(([a,b])=>transport.some(x=>x?.from===a&&x?.to===b)).length;
-  const stayHits=["ニッシン・ナンバ・イン","ホテル浦島","グランパスSea","エレガンテ白浜"].filter(name=>stays.some(x=>x?.name===name)).length;
-  return routeHits>=2||stayHits>=2;
+  if(transport.length<4||transport.length>5)return false;
+  const legacyRoutes=[["横浜","大阪"],["天王寺","紀伊勝浦"],["大阪","紀伊勝浦"],["紀伊勝浦","白浜"],["白浜","横浜"]];
+  const hits=legacyRoutes.filter(([a,b])=>transport.some(x=>x?.from===a&&x?.to===b)).length;
+  const noOtherCollections=!(j?.stays||[]).length&&!(j?.itinerary||[]).length&&!(j?.memos||[]).length&&!(j?.packing||[]).length&&!(j?.logs||[]).length;
+  return hits>=4&&noOtherCollections;
 }
 function isGhostJourney(j){
   if(!j||!j.trip)return true;
-  const t=j.trip||{};
-  const defaultIdentity=(!t.title||t.title==="今回の旅")&&!String(t.destination||"").trim()&&!String(t.startDate||"").trim()&&!String(t.endDate||"").trim()&&!String(t.origin||"").trim()&&!String(t.knownNote||"").trim();
-  const hasCollections=journeyHasRealCollections(j);
-
-  // A saved item with no trip identity and no actual trip collections is not a journey.
-  // Earlier builds could leave one behind after Welcome-only navigation even when its meta/source
-  // no longer said "new journey". Purge it regardless of legacy metadata.
-  if(defaultIdentity&&!hasCollections) return true;
-
-  // v0.5.0-v0.5.4 could also leave an unnamed shell contaminated with the Osaka seed payload.
-  // If it still has no independent identity, it is not a real second journey.
-  if(defaultIdentity&&looksLikeOsakaSeedPayload(j)) return true;
-  return false;
+  return hasDefaultJourneyIdentity(j)&&!journeyHasRealCollections(j);
 }
 function journeyHasMeaningfulData(j){
   if(!j||isGhostJourney(j))return false;
@@ -125,10 +115,11 @@ function journeyContentSignature(j){
   const pick=(obj,keys)=>Object.fromEntries(keys.map(k=>[k,obj?.[k]??null]));
   const transport=(j.transport||[]).map(x=>pick(x,["date","from","to","mode","time","price","status","memo"]));
   const stays=(j.stays||[]).map(x=>pick(x,["date","name","area","status","price","memo"]));
+  const welcome=j.welcome?pick(j.welcome,["party","mood","stage","entryRoute","known","knownNote"]):null;
   const payload={
     trip:pick(t,["title","startDate","endDate","origin","destination","partyMode","mood","readiness","entryRoute","knownNote"]),
     knownCategories:Array.isArray(t.knownCategories)?[...t.knownCategories]:[],
-    welcome:j.welcome||null,
+    welcome,
     transport,stays,
     itinerary:j.itinerary||[],memos:j.memos||[],packing:j.packing||[],logs:j.logs||[]
   };
@@ -140,6 +131,16 @@ function journeysHaveSameContent(a,b){
 }
 function normalizeRegistry(r){
   if(!r||!r.currentJourney)return r;
+  const needsV057Cleanup=r.schemaVersion!=="0.5.7"||!r.meta?.legacyTransportCleanupV057;
+
+  // One-time cleanup for a v0.5.0-v0.5.6 bug chain: a visually blank journey could carry
+  // the old 5-card Osaka transport set after legacy migration. Keep genuine user-entered
+  // transport-only journeys; purge only the known stale route fingerprint during migration.
+  if(needsV057Cleanup&&hasDefaultJourneyIdentity(r.currentJourney)&&looksLikeLegacyStaleTransportPayload(r.currentJourney)){
+    r.currentJourney.transport=[];
+    r.currentJourney.meta={...(r.currentJourney.meta||{}),staleBlankTransportPurgedV057:true,updatedAt:new Date().toISOString()};
+  }
+
   const currentId=r.currentJourney?.trip?.id||"";
   const currentSig=journeyContentSignature(r.currentJourney);
   const seenIds=new Set();
@@ -149,17 +150,15 @@ function normalizeRegistry(r){
     const id=j?.trip?.id||"";
     const sig=journeyContentSignature(j);
     if(!id||id===currentId||seenIds.has(id)||isGhostJourney(j))continue;
-    // Legacy v0.5.x could leave a full clone of the active journey with a different ID.
-    // A saved shelf must never contain a second copy of the journey that is active now.
+    if(needsV057Cleanup&&hasDefaultJourneyIdentity(j)&&looksLikeLegacyStaleTransportPayload(j))continue;
     if(sig&&currentSig&&sig===currentSig)continue;
-    // Also collapse exact duplicate saved clones created by the same bug chain.
     if(sig&&seenSigs.has(sig))continue;
     seenIds.add(id);if(sig)seenSigs.add(sig);cleaned.push(j);
   }
   r.savedJourneys=cleaned;
   if(!Array.isArray(r.completedJourneys))r.completedJourneys=[];
-  r.schemaVersion="0.5.6";
-  r.meta={...(r.meta||{}),registryNormalizedV056:true};
+  r.schemaVersion="0.5.7";
+  r.meta={...(r.meta||{}),registryNormalizedV057:true,legacyTransportCleanupV057:true};
   return r;
 }
 
@@ -169,7 +168,7 @@ function loadRegistry(){
     if(r&&r.currentJourney&&Array.isArray(r.savedJourneys)){
       const before=JSON.stringify(r.savedJourneys);
       normalizeRegistry(r);
-      if(before!==JSON.stringify(r.savedJourneys)||r.schemaVersion!=="0.5.6"||!r.meta?.registryNormalizedV056){
+      if(before!==JSON.stringify(r.savedJourneys)||r.schemaVersion!=="0.5.7"||!r.meta?.registryNormalizedV057){
         r.meta={...(r.meta||{}),updatedAt:new Date().toISOString()};
       }
       localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(r));
@@ -179,13 +178,13 @@ function loadRegistry(){
   let current=null;
   try{const legacy=JSON.parse(localStorage.getItem(JOURNEY_BOX_KEY)||"null");if(legacy&&legacy.trip)current=migrateLegacyJourney(legacy);}catch(e){}
   if(!current) current=createBlankJourney();
-  const registry={schemaVersion:"0.5.6",currentJourney:current,savedJourneys:[],completedJourneys:[],meta:{createdAt:new Date().toISOString(),migratedFromSingleJourney:!!localStorage.getItem(JOURNEY_BOX_KEY),registryNormalizedV056:true}};
+  const registry={schemaVersion:"0.5.7",currentJourney:current,savedJourneys:[],completedJourneys:[],meta:{createdAt:new Date().toISOString(),migratedFromSingleJourney:!!localStorage.getItem(JOURNEY_BOX_KEY),registryNormalizedV057:true,legacyTransportCleanupV057:true}};
   localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(registry));
   return registry;
 }
 function saveRegistry(registry){normalizeRegistry(registry);registry.meta={...(registry.meta||{}),updatedAt:new Date().toISOString()};localStorage.setItem(JOURNEY_REGISTRY_KEY,JSON.stringify(registry));return registry;}
 function loadJourneyBox(){return loadRegistry().currentJourney;}
-function saveJourneyBox(box){const r=loadRegistry();const next=deepClone(box);next.schemaVersion="0.5.6";next.meta={...(next.meta||{}),updatedAt:new Date().toISOString()};r.currentJourney=next;saveRegistry(r);return next;}
+function saveJourneyBox(box){const r=loadRegistry();const next=deepClone(box);next.schemaVersion="0.5.7";next.meta={...(next.meta||{}),updatedAt:new Date().toISOString()};r.currentJourney=next;saveRegistry(r);return next;}
 function listSavedJourneys(){return deepClone(loadRegistry().savedJourneys||[]);}
 function saveCurrentJourneyForLater(){const r=loadRegistry();const current=deepClone(r.currentJourney);if(!journeyHasMeaningfulData(current))return null;current.trip={...current.trip,lifecycle:"saved"};current.meta={...(current.meta||{}),savedForLaterAt:new Date().toISOString()};const i=r.savedJourneys.findIndex(x=>x.trip?.id===current.trip?.id);if(i>=0)r.savedJourneys[i]=current;else r.savedJourneys.unshift(current);saveRegistry(r);return current;}
 function startNewBlankJourney({saveCurrent=false}={}){const r=loadRegistry();if(saveCurrent&&journeyHasMeaningfulData(r.currentJourney)){const current=deepClone(r.currentJourney);current.trip={...current.trip,lifecycle:"saved"};current.meta={...(current.meta||{}),savedForLaterAt:new Date().toISOString()};const i=r.savedJourneys.findIndex(x=>x.trip?.id===current.trip?.id);if(i>=0)r.savedJourneys[i]=current;else r.savedJourneys.unshift(current);}r.currentJourney=createBlankJourney();saveRegistry(r);localStorage.removeItem(JOURNEY_BOX_KEY);return r.currentJourney;}

@@ -174,12 +174,6 @@ const TRANSPORT_LINKS={
  nukui:{label:"ぬくいレンタカー",url:"https://www.nukui-ltd.com/rentacar_katsuura.html"},
  ana:{label:"ANA",url:"https://www.ana.co.jp/"}
 };
-function defaultTransport(){return [
- {id:"leg1",label:"01",date:"11/19",from:"横浜",to:"大阪",mode:"飛行機",time:"13:30 → 14:40候補",price:"10,910円目安",status:"監視中",memo:"羽田→伊丹。チケット確保後に予約。"},
- {id:"leg2",label:"02",date:"11/20",from:"大阪",to:"紀伊勝浦",mode:"特急・電車",time:"天王寺 7:59 → 新宮 11:59",price:"6,750円目安",status:"発売待ち",memo:"くろしお1号／WEB早特7／D席・できれば7D。新宮→紀伊勝浦は別途確認。"},
- {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"レンタカー",time:"",price:"10,000円目安",status:"未予約",memo:"ぬくいレンタカー。勝浦借受→白浜返却。乗り捨て条件・営業時間確認。"},
- {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"横浜",mode:"飛行機",time:"最終便候補",price:"15,000円目安",status:"監視中",memo:"南紀白浜→羽田。最終便軸で確認。"}
-];}
 function loadTransport(){const box=loadJourneyBox();return Array.isArray(box.transport)?box.transport:[];}
 function saveTransport(data){replaceJourneyTransport(data);}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
