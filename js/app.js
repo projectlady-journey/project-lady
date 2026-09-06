@@ -1,6 +1,7 @@
 const LEGACY_PROFILE_KEY="projectLadyJourneyProfile_v07";
 const LEGACY_TRANSPORT_KEY="projectLadyTransport_v01";
 const UI_STATE_KEY="projectLadyUiState_v01";
+const HOME_INTRO_KEY="projectLadyHomeIntroSeen_v01";
 const answers={party:null,mood:null,stage:null,entryRoute:null,known:[],knownNote:""};
 const screens=[
 {type:"intro",eyebrow:"A journey begins",title:"今回は、どんな旅ですか？",text:"まだ何も決まっていなくても大丈夫。<br>ここから、少しずつ。"},
@@ -86,7 +87,7 @@ function render(){
   sheet.className="sheet";
   if(s.type==="intro"){
    const savedCount=listSavedJourneys().length;
-   sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button>${savedCount?`<button class="start-button saved-entry-button" id="openSaved">保存した旅をひらく<span>${savedCount}件</span></button>`:""}<p class="footer-message">This app is also on a journey.</p>`;
+   sheet.innerHTML=`<p class="tiny">${s.eyebrow}</p><h1>${s.title}</h1><p class="lead">${s.text}</p><button class="start-button" id="start">旅をはじめる</button><button class="start-button start-button-secondary" id="midAfter">旅の途中・旅のあと</button>${savedCount?`<button class="start-button saved-entry-button" id="openSaved">保存した旅をひらく　${savedCount}件</button>`:""}<p class="footer-message">This app is also on a journey.</p>`;
    document.getElementById("start").onclick=()=>{answers.entryRoute="before";persistWelcomeDraft();currentScreen=1;render()};
    document.getElementById("midAfter").onclick=()=>{answers.entryRoute="midAfter";persistWelcomeDraft();currentScreen=screens.length-1;render()};
    const openSaved=document.getElementById("openSaved");if(openSaved)openSaved.onclick=()=>renderSavedJourneys({backToWelcome:true});
@@ -121,6 +122,8 @@ function renderHome(){
  const box=loadJourneyBox();
  const profile=box.welcome||answers;
  const trip=box.trip||{};
+ const savedCount=listSavedJourneys().length;
+ const showHomeIntro=!localStorage.getItem(HOME_INTRO_KEY);
  const cards=[
   ["ROUTE","交通","移動手段を比べる・確認する"],
   ["STAY","ホテル・予約","候補と予約済みをまとめる"],
@@ -135,25 +138,30 @@ function renderHome(){
     <p class="home-kicker">PROJECT LADY / JOURNEY</p>
     <h1 class="home-title">${esc(trip.title||"今回の旅")}</h1>
     <p class="home-date">${esc(formatTripDates(trip.startDate,trip.endDate))} ・ ${esc(trip.destination||"旅先未登録")}</p>
+    <button class="home-edit" id="editJourney" type="button">旅の情報を編集</button>
     <span class="home-status">${esc(homeStatus(profile.stage))}</span>
    </div></div>
    <div class="home-body">
+    ${showHomeIntro?`<aside class="home-intro-guide" id="homeIntroGuide"><div><strong>ここが、この旅のHomeです。</strong><span>交通・ホテル・旅程・持ちものなど、旅の情報はここから開けます。</span></div><button id="closeHomeIntro" type="button" aria-label="案内を閉じる">×</button></aside>`:""}
     <p class="home-intro">${partyCopy(profile.party)||"旅の続きを、ここから。"}</p>
     ${profile.stage==="planning"?`<button class="home-start-card" id="homeStartJourney" type="button"><small>START</small><strong>何から考える？</strong><span>気分・体験・予算・日数から、今の旅を少しずつ。</span></button>`:""}
     <div class="home-grid">${cards.map(c=>`<button class="home-card" data-page="${c[1]}"><small>${c[0]}</small><strong>${c[1]}</strong><span>${c[2]}</span></button>`).join("")}</div>
     <div class="journey-actions">
       <p class="journey-actions-label">旅の管理</p>
       <button class="journey-review-link" id="reviewJourney" type="button"><span>旅のはじまりを見直す</span><small>人数・旅の気分・今の状況を変更する</small><b>→</b></button>
-      <button class="journey-review-link" id="savedJourneys" type="button"><span>保存した旅</span><small>いったん置いておいた旅を、続きから使う</small><b>→</b></button>
+      <button class="journey-review-link" id="savedJourneys" type="button"><span>保存した旅をひらく${savedCount?`　${savedCount}件`:""}</span><small>候補や延期した旅も、ここから再開できます。</small><b>→</b></button>
       <button class="journey-review-link journey-reset-link" id="restartJourney" type="button"><span>最初からやり直す</span><small>今の旅を保存して、新しい旅を始めることもできます</small><b>→</b></button>
     </div>
     <p class="home-note"><span class="home-note-en">This app is also on a journey.</span><span class="home-note-ja">このアプリも旅の途中です。</span></p>
    </div>
  </section>`;
  document.getElementById("reviewJourney").onclick=()=>{currentScreen=0;render()};
+ document.getElementById("editJourney").onclick=showJourneyEditPrompt;
  document.getElementById("savedJourneys").onclick=renderSavedJourneys;
  document.getElementById("restartJourney").onclick=showJourneyRestartPrompt;
  const homeStartJourney=document.getElementById("homeStartJourney");
+ const closeHomeIntro=document.getElementById("closeHomeIntro");
+ if(closeHomeIntro)closeHomeIntro.onclick=()=>{localStorage.setItem(HOME_INTRO_KEY,"1");document.getElementById("homeIntroGuide")?.remove();};
  if(homeStartJourney) homeStartJourney.onclick=renderDestinationStart;
  document.querySelectorAll(".home-card").forEach(b=>b.onclick=()=>{
    if(b.dataset.page==="交通") renderTransport();
@@ -191,10 +199,10 @@ function renderTransport(){
  saveUiState("transport");
  const profile=load()||answers;
  app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";const data=loadTransport();
- sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="transportHome">←</button><div><p class="inside-kicker">PROJECT LADY / ROUTE</p><h1>交通</h1></div></header><div class="transport-wrap">
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="transportHome">← 旅のHomeへ</button><div><p class="inside-kicker">PROJECT LADY / ROUTE</p><h1>交通</h1></div></header><div class="transport-wrap">
  <section class="transport-intro"><p class="transport-lead">まず、どう行くかを見る。</p><p class="transport-note">経路を見て、候補を比べて、最後に公式条件を確認する。予約先のURLを手入力する必要はありません。</p></section>
  <section class="search-hub"><div class="search-hub-head"><div><p class="search-hub-kicker">SEARCH</p><h2>交通を探す</h2></div></div><div class="search-tools">${["yahoo","maps","skyscanner","flights","smartex","e5489","ekinet"].map(k=>linkButton(k)).join("")}</div><p class="search-hub-note">経路全体は乗換案内・Maps。飛行機はSkyscanner＋Google Flights。鉄道は経路が見えたら区間に合うJR公式へ。</p></section>
- <div class="transport-list">${data.map(x=>`<article class="route-card" data-id="${esc(x.id)}"><div class="route-top"><span class="route-no">${esc(x.label)}</span><input class="route-date" data-field="date" value="${esc(x.date)}" aria-label="日付"></div><div class="route-line"><input class="route-place route-from" data-field="from" value="${esc(x.from)}" aria-label="出発地"><span class="route-arrow">→</span><input class="route-place route-to" data-field="to" value="${esc(x.to)}" aria-label="到着地"></div><div class="route-search"><span>この区間を探す</span><div class="route-search-links">${routeTools(x.id).map(k=>linkButton(k,true)).join("")}</div></div><div class="route-grid"><label>移動手段<select data-field="mode">${["未定","新幹線","特急・電車","飛行機","レンタカー","バス","その他"].map(v=>`<option ${x.mode===v?"selected":""}>${v}</option>`).join("")}</select></label><label>時間<input data-field="time" value="${esc(x.time)}" placeholder="例 09:10 → 11:20"></label><label>料金<input data-field="price" value="${esc(x.price)}" placeholder="例 14,500円"></label><label>状態<select data-field="status">${["検討中","候補","監視中","発売待ち","未予約","予約予定","予約済み"].map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}</select></label></div><label class="route-wide">Memo<textarea data-field="memo" rows="3" placeholder="座席、変更条件、乗換など">${esc(x.memo)}</textarea></label></article>`).join("")}</div>
+ <div class="transport-list">${data.map(x=>`<article class="route-card" data-id="${esc(x.id)}"><div class="route-top"><span class="route-no">${esc(x.label)}</span><input class="route-date" data-field="date" value="${esc(x.date)}" aria-label="日付"></div><div class="route-line"><input class="route-place route-from" data-field="from" value="${esc(x.from)}" aria-label="出発地"><span class="route-arrow">→</span><input class="route-place route-to" data-field="to" value="${esc(x.to)}" aria-label="到着地"></div><div class="route-search"><span>この区間を探す</span><div class="route-search-links">${routeTools(x.id).map(k=>linkButton(k,true)).join("")}</div></div><div class="route-grid"><label>移動手段<select data-field="mode">${["未定","新幹線","特急・電車","飛行機","車","レンタカー","バス","その他"].map(v=>`<option ${x.mode===v?"selected":""}>${v}</option>`).join("")}</select></label><label>時間<input data-field="time" value="${esc(x.time)}" placeholder="例 09:10 → 11:20"></label><label>料金<input data-field="price" value="${esc(x.price)}" placeholder="例 14,500円"></label><label>状態<select data-field="status">${["検討中","候補","監視中","発売待ち","未予約","予約予定","予約済み"].map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}</select></label></div><label class="route-wide">Memo<textarea data-field="memo" rows="3" placeholder="座席、変更条件、乗換など">${esc(x.memo)}</textarea></label></article>`).join("")}</div>
  <button class="add-leg" id="addTransportLeg">＋ 区間を追加</button>
  <button class="compare-guide-toggle" id="compareGuideToggle" type="button" aria-expanded="false">比べ方を見る</button>
  <section class="transport-flow is-collapsed" id="compareGuide"><p class="search-hub-kicker">HOW TO CHOOSE</p><h2>比べる順番</h2><ol><li><span>1</span><div><strong>経路候補を見る</strong><small>乗換案内・Google Maps</small></div></li><li><span>2</span><div><strong>交通手段ごとの候補を見る</strong><small>飛行機・鉄道など</small></div></li><li><span>3</span><div><strong>実質総額を比べる</strong><small>運賃だけでなく時間・アクセス・変更条件も</small></div></li><li><span>4</span><div><strong>候補を残す</strong><small>最安・楽・時間優先など理由もMemoへ</small></div></li><li><span>5</span><div><strong>公式条件を確認して予約</strong><small>取消・変更・支払条件を最後に確認</small></div></li></ol></section>
@@ -215,7 +223,7 @@ function renderStay(){
  app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
  const data=loadStays();
  const statuses=["検討中","候補","第一希望・確認待ち","保留","未予約","予約予定","予約済み","保険予約","延泊保険","取消済み"];
- sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="stayHome">←</button><div><p class="inside-kicker">PROJECT LADY / STAY</p><h1>ホテル・予約</h1></div></header><div class="transport-wrap">
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="stayHome">← 旅のHomeへ</button><div><p class="inside-kicker">PROJECT LADY / STAY</p><h1>ホテル・予約</h1></div></header><div class="transport-wrap">
  <section class="transport-intro"><p class="transport-lead">泊まる場所を、ひとつにまとめる。</p><p class="transport-note">予約済みも、保険で押さえた宿も、まだ決めない夜も。同じ旅のデータとして残します。</p></section>
  <div class="transport-list">${data.map(x=>`<article class="route-card stay-card ${x.status==="保険予約"||x.status==="延泊保険"?"is-backup":""}" data-id="${esc(x.id)}"><div class="route-top"><span class="route-no">${esc(x.label)}</span><span class="stay-status-chip">${esc(x.status)}</span><input class="route-date" data-field="date" value="${esc(x.date)}" aria-label="宿泊日"></div><label class="route-wide">宿・滞在先<input data-field="name" value="${esc(x.name)}" placeholder="ホテル名・滞在先"></label><label class="route-wide">エリア<input data-field="area" value="${esc(x.area)}" placeholder="大阪・白浜など"></label><div class="route-grid"><label>状態<select data-field="status">${statuses.map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}</select></label><label>料金<input data-field="price" value="${esc(x.price)}" placeholder="未入力"></label></div><label class="route-wide">Memo<textarea data-field="memo" rows="3" placeholder="予約先、取消期限、部屋条件など">${esc(x.memo)}</textarea></label></article>`).join("")}</div>
  <button class="add-leg" id="addStay">＋ 宿泊先を追加</button>
@@ -235,7 +243,7 @@ function renderDestinationStart(){
   ["BUDGET","予算から決める","無理のない範囲から、行ける場所を。"],
   ["DAYS","日数から決める","使える時間に合う旅を。"]
  ];
- sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="destinationHome">←</button><div><p class="inside-kicker">PROJECT LADY / JOURNEY</p><h1>旅のことを考える</h1></div></header><div class="transport-wrap">
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="destinationHome">← 旅のHomeへ</button><div><p class="inside-kicker">PROJECT LADY / JOURNEY</p><h1>旅のことを考える</h1></div></header><div class="transport-wrap">
  <section class="destination-intro"><p class="transport-lead">まだ決まっていなくて、大丈夫。</p><p class="transport-note">何から考える？</p></section>
  <div class="destination-ways">${ways.map(w=>`<button class="destination-way" type="button"><small>${w[0]}</small><strong>${w[1]}</strong><span>${w[2]}</span></button>`).join("")}</div>
  <p class="destination-later">気になることが見えてきたら、必要なものを少しずつ使えます。</p>
@@ -246,7 +254,7 @@ function renderDestinationStart(){
 function renderPlaceholder(name){
  saveUiState("placeholder",{name});
  stage.className="home-stage";sheet.className="";
- sheet.innerHTML=`<section class="home"><div class="placeholder"><p class="home-kicker">PROJECT LADY</p><h2>${name}</h2><p>ここは次の開発で、11月の旅の実データを入れながら育てます。</p><button class="text-link" id="homeBack">← 旅のホームへ戻る</button></div></section>`;
+ sheet.innerHTML=`<section class="home"><div class="placeholder"><p class="home-kicker">PROJECT LADY</p><h2>${name}</h2><p>ここは次の開発で、11月の旅の実データを入れながら育てます。</p><button class="text-link" id="homeBack">← 旅のHomeへ</button></div></section>`;
  document.getElementById("homeBack").onclick=renderHome;
 }
 
@@ -257,7 +265,16 @@ function journeyDisplayName(j){
  const t=j?.trip||{};
  if(t.title && t.title!=="今回の旅") return t.title;
  if(t.destination) return `${t.destination}の旅`;
- return "保存した旅";
+ return "今回の旅";
+}
+function showJourneyEditPrompt(){
+ const trip=loadJourneyBox().trip||{};
+ const overlay=document.createElement("div");overlay.className="journey-modal";
+ overlay.innerHTML=`<form class="journey-modal-card journey-edit-card" id="journeyEditForm"><p class="inside-kicker">JOURNEY DETAILS</p><h2>旅の情報を編集</h2><div class="journey-edit-fields"><label>旅のタイトル<input name="title" value="${esc(trip.title||"")}" placeholder="例：大阪・紀南3泊4日の旅"></label><div><label>出発日<input name="startDate" type="date" value="${esc(trip.startDate||"")}"></label><label>帰着日<input name="endDate" type="date" value="${esc(trip.endDate||"")}"></label></div><label>行き先<input name="destination" value="${esc(trip.destination||"")}" placeholder="例：大阪・紀南"></label></div><div class="journey-modal-actions"><button class="start-button" type="submit">保存する</button><button class="modal-cancel" id="journeyEditCancel" type="button">やめる</button></div></form>`;
+ document.body.appendChild(overlay);
+ overlay.querySelector("#journeyEditCancel").onclick=()=>overlay.remove();
+ overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+ overlay.querySelector("#journeyEditForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.currentTarget);const startDate=String(f.get("startDate")||"");const endDate=String(f.get("endDate")||"");if(startDate&&endDate&&endDate<startDate){alert("帰着日は、出発日以降の日付を選んでください。");return;}patchJourneyTrip({title:String(f.get("title")||"").trim()||"今回の旅",startDate,endDate,destination:String(f.get("destination")||"").trim()});overlay.remove();renderHome();};
 }
 function showJourneyRestartPrompt(){
  const current=loadJourneyBox();
@@ -274,10 +291,22 @@ function showJourneyRestartPrompt(){
 }
 function renderSavedJourneys({backToWelcome=false}={}){
  saveUiState("savedJourneys",{backToWelcome});app.classList.add("home-mode");showHero("");stage.className="home-stage";sheet.className="";
+ const current=loadJourneyBox();
  const saved=listSavedJourneys();
- sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="savedHome">←</button><div><p class="inside-kicker">PROJECT LADY / SAVED</p><h1>保存した旅</h1></div></header><div class="transport-wrap"><section class="transport-intro"><p class="transport-lead">あとで続きを使える旅。</p><p class="transport-note">終わった旅ではありません。候補や延期した旅も、ここから戻せます。</p></section>${saved.length?`<div class="saved-journey-list">${saved.map(j=>`<article class="saved-journey-card"><div><p class="inside-kicker">SAVED JOURNEY</p><h2>${esc(journeyDisplayName(j))}</h2><p>${esc(formatTripDates(j.trip?.startDate,j.trip?.endDate))}${j.trip?.destination?` ・ ${esc(j.trip.destination)}`:""}</p></div><button class="resume-journey" data-id="${esc(j.trip?.id)}">この旅を再開</button></article>`).join("")}</div>`:`<div class="saved-empty"><p>保存している旅は、まだありません。</p></div>`}<p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
+ sheet.innerHTML=`<section class="transport-page"><header class="inside-header"><button class="inside-back" id="savedHome">${backToWelcome?"← 最初の画面へ":"← 旅のHomeへ"}</button><div><p class="inside-kicker">PROJECT LADY / JOURNEYS</p><h1>旅の管理</h1></div></header><div class="transport-wrap"><section class="transport-intro"><p class="transport-lead">使っている旅と、保存している旅。</p><p class="transport-note">候補や延期した旅も、ここから再開できます。</p></section><section class="journey-group"><p class="journey-group-label">CURRENT JOURNEY｜現在の旅</p><article class="saved-journey-card current-journey-card"><div><p class="inside-kicker">CURRENT JOURNEY</p><h2>${esc(journeyDisplayName(current))}</h2><p>${esc(formatTripDates(current.trip?.startDate,current.trip?.endDate))}${current.trip?.destination?` ・ ${esc(current.trip.destination)}`:""}</p></div><button class="resume-journey current-home" id="currentJourneyHome">現在の旅に戻る</button></article></section><section class="journey-group"><p class="journey-group-label">SAVED JOURNEYS｜保存している旅　${saved.length}件</p>${saved.length?`<div class="saved-journey-list">${saved.map(j=>`<article class="saved-journey-card"><div><p class="inside-kicker">SAVED JOURNEY</p><h2>${esc(journeyDisplayName(j))}</h2><p>${esc(formatTripDates(j.trip?.startDate,j.trip?.endDate))}${j.trip?.destination?` ・ ${esc(j.trip.destination)}`:""}</p></div><div class="saved-journey-actions"><button class="resume-journey" data-id="${esc(j.trip?.id)}">この旅を再開</button><button class="delete-journey" data-id="${esc(j.trip?.id)}" data-name="${esc(journeyDisplayName(j))}">削除</button></div></article>`).join("")}</div>`:`<div class="saved-empty"><p>保存している旅は、まだありません。</p></div>`}</section><p class="inside-footer"><span>This app is also on a journey.</span><small>このアプリも旅の途中です。</small></p></div></section>`;
  document.getElementById("savedHome").onclick=()=>{if(backToWelcome){currentScreen=0;render();}else renderHome();};
- document.querySelectorAll(".resume-journey").forEach(b=>b.onclick=()=>{const j=resumeSavedJourney(b.dataset.id);if(!j)return;localStorage.removeItem(UI_STATE_KEY);resetWelcomeAnswers();if(j.welcome)Object.assign(answers,j.welcome);renderHome();});
+ document.getElementById("currentJourneyHome").onclick=()=>{const profile=current.welcome;if(profile){resetWelcomeAnswers();Object.assign(answers,profile);renderHome();}else{currentScreen=0;render();}};
+ document.querySelectorAll(".resume-journey[data-id]").forEach(b=>b.onclick=()=>{const j=resumeSavedJourney(b.dataset.id);if(!j)return;localStorage.removeItem(UI_STATE_KEY);resetWelcomeAnswers();if(j.welcome)Object.assign(answers,j.welcome);renderHome();});
+ document.querySelectorAll(".delete-journey").forEach(b=>b.onclick=()=>showDeleteSavedJourneyPrompt(b.dataset.id,b.dataset.name,()=>renderSavedJourneys({backToWelcome})));
+}
+
+function showDeleteSavedJourneyPrompt(id,name,onDone){
+ const overlay=document.createElement("div");overlay.className="journey-modal";
+ overlay.innerHTML=`<div class="journey-modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteJourneyTitle"><p class="inside-kicker">DELETE JOURNEY</p><h2 id="deleteJourneyTitle">「${esc(name)}」を削除しますか？</h2><p>この操作は元に戻せません。</p><div class="journey-modal-actions"><button class="modal-secondary" id="deleteJourneyCancel">削除しない</button><button class="modal-danger" id="deleteJourneyConfirm">削除する</button></div></div>`;
+ document.body.appendChild(overlay);
+ overlay.querySelector("#deleteJourneyCancel").onclick=()=>overlay.remove();
+ overlay.querySelector("#deleteJourneyConfirm").onclick=()=>{if(deleteSavedJourney(id)!==1){alert("削除対象を確認できなかったため、中止しました。");return;}overlay.remove();onDone();};
+ overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
 }
 
 function next(){if(currentScreen<screens.length-1){currentScreen++;render()}}

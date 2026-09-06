@@ -52,12 +52,15 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
   gap:13px;
 }
 .inside-back{
-  width:38px;height:38px;
+  min-height:38px;
+  padding:8px 13px;
   border:1px solid rgba(65,72,67,.12);
-  border-radius:50%;
+  border-radius:999px;
   background:rgba(255,255,255,.72);
   color:var(--ink);
   cursor:pointer;
+  white-space:nowrap;
+  font-size:12px;
 }
 .inside-kicker{
   margin:2px 0 5px;
@@ -372,4 +375,14 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 
 /* v0.5.2: saved journeys are reachable from a blank Welcome only when they exist. */
 .saved-entry-button{position:relative;background:rgba(255,255,255,.72)!important;color:#4f5852!important;border:1px solid rgba(65,72,67,.15)!important;margin-top:10px}
-.saved-entry-button span{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:10px;letter-spacing:.04em;color:#7d857f;background:rgba(255,255,255,.75);border:1px solid rgba(65,72,67,.12);border-radius:999px;padding:3px 7px}
+
+/* Journey management UX v0.5.8 */
+.home-edit{margin-top:12px;padding:7px 11px;border:1px solid rgba(255,255,255,.46);border-radius:999px;background:rgba(20,28,23,.16);color:#fff;cursor:pointer;font-size:12px;backdrop-filter:blur(8px)}
+.home-intro-guide{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:0 0 20px;padding:16px 17px;border:1px solid rgba(65,72,67,.11);border-radius:18px;background:#eef2ec;color:var(--ink)}
+.home-intro-guide strong,.home-intro-guide span{display:block}.home-intro-guide strong{font-size:15px;font-weight:500}.home-intro-guide span{margin-top:5px;color:var(--soft);font-size:12.5px;line-height:1.6}.home-intro-guide button{flex:0 0 auto;border:0;background:transparent;color:#7b8079;font-size:20px;line-height:1;cursor:pointer}
+.journey-group{margin-top:24px}.journey-group:first-of-type{margin-top:4px}.journey-group-label{margin:0 2px 9px;color:#858a83;font:10px "Courier New",monospace;letter-spacing:.1em}
+.current-journey-card{border-color:rgba(75,84,77,.22);background:#eef2ec}.current-home{background:#fff;color:var(--accent);border:1px solid rgba(65,72,67,.17)}
+.saved-journey-actions{flex:0 0 auto;display:flex;align-items:center;gap:8px}.delete-journey{padding:10px 12px;border:1px solid rgba(125,76,70,.18);border-radius:999px;background:#fff;color:#8a5d57;cursor:pointer;font-size:12px}
+.modal-danger{width:100%;margin-top:8px;padding:13px 16px;border:1px solid rgba(129,74,68,.20);border-radius:999px;background:#8b5d57;color:#fff;cursor:pointer}
+.journey-edit-fields{display:grid;gap:13px;margin-top:18px}.journey-edit-fields>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}.journey-edit-fields label{display:grid;gap:6px;color:#777c75;font-size:12px}.journey-edit-fields input{width:100%;padding:11px 12px;border:1px solid rgba(65,72,67,.16);border-radius:12px;background:#fff;color:var(--ink);font:inherit}
+@media(max-width:520px){.inside-header{gap:10px}.inside-back{padding:8px 11px}.saved-journey-actions{width:100%;margin-top:16px}.saved-journey-actions .resume-journey{margin-top:0;flex:1}.delete-journey{flex:0 0 auto}.journey-edit-fields>div{grid-template-columns:1fr}}
