@@ -386,3 +386,9 @@ h1{margin:0;font-size:clamp(26px,7vw,35px);font-weight:500;line-height:1.38;lett
 .modal-danger{width:100%;margin-top:8px;padding:13px 16px;border:1px solid rgba(129,74,68,.20);border-radius:999px;background:#8b5d57;color:#fff;cursor:pointer}
 .journey-edit-fields{display:grid;gap:13px;margin-top:18px}.journey-edit-fields>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}.journey-edit-fields label{display:grid;gap:6px;color:#777c75;font-size:12px}.journey-edit-fields input{width:100%;padding:11px 12px;border:1px solid rgba(65,72,67,.16);border-radius:12px;background:#fff;color:var(--ink);font:inherit}
 @media(max-width:520px){.inside-header{gap:10px}.inside-back{padding:8px 11px}.saved-journey-actions{width:100%;margin-top:16px}.saved-journey-actions .resume-journey{margin-top:0;flex:1}.delete-journey{flex:0 0 auto}.journey-edit-fields>div{grid-template-columns:1fr}}
+
+/* v0.5.9: journey backup / restore */
+.journey-backup{margin-top:28px;padding:18px 19px;border:1px solid rgba(65,72,67,.12);border-radius:20px;background:rgba(255,255,255,.62)}
+.journey-backup>p:not(.journey-group-label){margin:0;color:var(--soft);font-size:13px;line-height:1.7}
+.journey-backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.journey-backup-actions .modal-secondary{margin:0;background:#fff}
+@media(max-width:520px){.journey-backup-actions{grid-template-columns:1fr}.journey-backup-actions .modal-secondary{min-height:46px}}

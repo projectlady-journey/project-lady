@@ -1,5 +1,5 @@
 /*
- * Project Lady / Journey Registry v0.5.8
+ * Project Lady / Journey Registry v0.5.9
  * Multiple journeys: one active journey, saved journeys, and a future completed archive.
  * v0.5.8: add stable first-saved timestamps, sorted saved journeys, and editable trip identity.
  * v0.4.x single-journey data is migrated without destroying the Osaka/Kinan working trip.
@@ -216,3 +216,32 @@ function replaceJourneyTransport(items){const box=loadJourneyBox();box.transport
 function replaceJourneyStays(items){const box=loadJourneyBox();box.stays=relabelStays(items);return saveJourneyBox(box);}
 function resetJourneyWelcome(){const box=loadJourneyBox();box.welcome=null;if(box.trip){box.trip.partyMode=null;box.trip.mood=null;box.trip.readiness=null;box.trip.entryRoute=null;box.trip.knownCategories=[];box.trip.knownNote="";}return saveJourneyBox(box);}
 function resetJourneyBox(){return startNewBlankJourney({saveCurrent:false});}
+
+/* v0.5.9: portable journey backup / safe restore */
+const JOURNEY_BACKUP_FORMAT = "project-lady-journey-backup-v1";
+function buildJourneyBackup(){
+  const registry=deepClone(loadRegistry());
+  return {format:JOURNEY_BACKUP_FORMAT,appVersion:"0.5.9",exportedAt:new Date().toISOString(),registry};
+}
+function validateJourneyBackup(payload){
+  if(!payload||payload.format!==JOURNEY_BACKUP_FORMAT||!payload.registry||!payload.registry.currentJourney)return false;
+  return Array.isArray(payload.registry.savedJourneys);
+}
+function importJourneyBackupSafely(payload){
+  if(!validateJourneyBackup(payload))throw new Error("このファイルはProject Ladyの旅バックアップではありません。");
+  const live=loadRegistry();
+  const incoming=normalizeRegistry(deepClone(payload.registry));
+  const pool=[];
+  const addUnique=(j)=>{
+    if(!journeyHasMeaningfulData(j))return;
+    if(j.trip?.id===live.currentJourney?.trip?.id||journeysHaveSameContent(j,live.currentJourney))return;
+    if(pool.some(x=>x.trip?.id===j.trip?.id||journeysHaveSameContent(x,j)))return;
+    const copy=deepClone(j);markSaved(copy);pool.push(copy);
+  };
+  (live.savedJourneys||[]).forEach(addUnique);
+  addUnique(incoming.currentJourney);
+  (incoming.savedJourneys||[]).forEach(addUnique);
+  live.savedJourneys=pool;
+  saveRegistry(live);
+  return {savedCount:pool.length};
+}
