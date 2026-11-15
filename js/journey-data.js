@@ -1,5 +1,5 @@
 /*
- * Project Lady / Journey Registry v0.5.9
+ * Project Lady / Journey Registry v0.5.10.4
  * Multiple journeys: one active journey, saved journeys, and a future completed archive.
  * v0.5.8: add stable first-saved timestamps, sorted saved journeys, and editable trip identity.
  * v0.4.x single-journey data is migrated without destroying the Osaka/Kinan working trip.
@@ -7,49 +7,10 @@
 const JOURNEY_BOX_KEY = "projectLadyJourneyBox_v01"; // legacy single-journey key
 const JOURNEY_REGISTRY_KEY = "projectLadyJourneyRegistry_v01";
 
-const JOURNEY_SEED = {
-  schemaVersion: "0.5.8",
-  trip: {
-    id: "2026-osaka-kinan-1119-1122",
-    title: "大阪・紀南3泊4日の旅",
-    startDate: "2026-11-19",
-    endDate: "2026-11-22",
-    origin: "横浜市神奈川区（自宅）",
-    destination: "大阪・紀南",
-    partyMode: "solo",
-    mood: "active",
-    readiness: "mostly",
-    entryRoute: "before",
-    knownCategories: ["destination", "dates", "transport", "stay", "plans", "bookings"],
-    knownNote: "",
-    mainPhoto: null,
-    lifecycle: "active"
-  },
-  welcome: {
-    party: "solo", mood: "active", stage: "mostly", entryRoute: "before",
-    known: ["destination", "dates", "transport", "stay", "plans", "bookings"], knownNote: ""
-  },
-  transport: [
-    {id:"leg1",label:"01",date:"11/19",from:"羽田",to:"神戸",mode:"飛行機",time:"09:10 → 10:30",price:"支払済",status:"予約済み",memo:"SKY103。購入・支払済。神戸到着後は大阪へ。"},
-    {id:"leg2",label:"02",date:"11/20",from:"天王寺",to:"新宮",mode:"特急・電車",time:"07:59 → 11:59",price:"WEB早特7候補",status:"発売待ち",memo:"くろしお1号。10/20 10:00発売。第1希望＝5号車17D、第2希望＝2号車17D。海側D＋奇数列＋最後尾＋電源を優先。"},
-    {id:"leg3",label:"03",date:"11/21",from:"紀伊勝浦",to:"白浜",mode:"レンタカー",time:"11/21 08:00 → 11/22 11:00",price:"6,600円",status:"予約済み",memo:"ぬくいレンタカー。勝浦借受→白浜返却。乗り捨て無料。"},
-    {id:"leg4",label:"04",date:"11/22",from:"白浜",to:"日根野",mode:"特急・電車",time:"17:20 → 日根野",price:"",status:"発売待ち",memo:"くろしお32号。10/22 10:00発売。窓側優先。17Dが空いていれば候補だが必須ではない。"},
-    {id:"leg5",label:"05",date:"11/22",from:"日根野",to:"関西空港",mode:"特急・電車",time:"→ 19:21頃",price:"",status:"発売待ち",memo:"くろしお32号から関空方面へ乗継。関空19:21頃着を目安。"},
-    {id:"leg6",label:"06",date:"11/22",from:"関西",to:"羽田",mode:"飛行機",time:"21:00 → 22:15",price:"10,690円",status:"予約済み",memo:"ANA98／ANA WINGS。購入・支払済。KIX T1→HND T2。予約番号 EQW7N。"}
-  ],
-  stays: [
-    {id:"stay1",label:"01",date:"11/19",name:"ニッシン・ナンバ・イン",area:"大阪・なんば",status:"予約済み",price:"5,001円",memo:"Agoda予約・支払済み。喫煙ルーム。予約ID 1755191376。"},
-    {id:"stay2",label:"02",date:"11/20",name:"ホテル浦島",area:"那智勝浦",status:"予約済み",price:"21,450円",memo:"公式予約・現地払い。16:30前後チェックイン予定。19:00 和DINING祭。"},
-    {id:"stay3",label:"03",date:"11/21",name:"祖母宅",area:"田辺方面",status:"第一希望・確認待ち",price:"",memo:"第一希望。ただし、まだ連絡前のため未確定。10月後半～11月上旬目安に相談。"},
-    {id:"stay3b",label:"04",date:"11/21",name:"グランパスSea",area:"白浜",status:"保険予約",price:"9,828円",memo:"11/21の保険宿。11/17まで取消無料。祖母宅泊が決まれば整理する。"},
-    {id:"stay3c",label:"05",date:"11/21",name:"エレガンテ白浜",area:"白浜",status:"保険予約",price:"11,610円＋入湯税150円",memo:"11/21の保険宿。11/18まで取消無料。祖母宅泊が決まれば整理する。"}
-  ],
-  itinerary: [], memos: [], packing: [], logs: [],
-  meta: {source:"大阪・紀南3泊4日_旅の台帳_v0.11.14_2026-09-04_旅程最新版反映版",seededAt:"2026-09-04",updatedAt:null}
-};
+/* v0.5.10.1+ safety fix: no personal trip data or outdated bookings in public source.
+   Current journeys remain in the browser's localStorage, never in this script. */
 
 function deepClone(v){return JSON.parse(JSON.stringify(v));}
-function cloneJourneySeed(){return deepClone(JOURNEY_SEED);}
 function makeJourneyId(){return `journey-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;}
 function createBlankJourney(){
   const now=new Date().toISOString();
@@ -59,26 +20,16 @@ function relabelStays(items){return (items||[]).map((item,i)=>({...item,label:St
 
 function migrateLegacyJourney(saved){
   if(!saved || !saved.trip) return saved;
+  // Conservative migration: never replace existing private data with a stale
+  // hard-coded sample route or booking. Preserve legacy fields as supplied.
   const next=deepClone(saved);
-  if(!Array.isArray(next.stays)) next.stays=cloneJourneySeed().stays;
-  const oldCombinedIndex=next.stays.findIndex(x=>x&&x.id==="stay3"&&x.name==="祖母宅／白浜保険宿");
-  if(oldCombinedIndex>=0){const seed=cloneJourneySeed().stays;next.stays.splice(oldCombinedIndex,1,seed[2],seed[3],seed[4]);}
-  const stay1=next.stays.find(x=>x&&x.id==="stay1");
-  if(stay1){if(stay1.price==="支払済"||stay1.price==="")stay1.price="5,001円";if(stay1.memo==="Agoda予約。喫煙ルーム。")stay1.memo="Agoda予約・支払済み。喫煙ルーム。予約ID 1755191376。";}
-  const stay2=next.stays.find(x=>x&&x.id==="stay2");
-  if(stay2){if(stay2.price==="")stay2.price="21,450円";if(stay2.memo==="19:00 和DINING祭。")stay2.memo="公式予約・現地払い。16:30前後チェックイン予定。19:00 和DINING祭。";}
-  const transport=Array.isArray(next.transport)?next.transport:[];
-  const hasAna98=transport.some(x=>x&&x.id==="leg6"&&x.from==="関西"&&x.to==="羽田");
-  const stale=transport.some(x=>x&&x.id==="leg4"&&x.to==="横浜")||transport.some(x=>x&&x.id==="leg1"&&x.from==="横浜")||!transport.some(x=>x&&x.id==="leg5")||!hasAna98;
-  if(next.trip.id===JOURNEY_SEED.trip.id&&stale){
-    const ids=new Set(["leg1","leg2","leg3","leg4","leg5","leg6"]);
-    const extras=transport.filter(x=>x&&!ids.has(x.id)&&[x.date,x.from,x.to,x.time,x.price,x.memo].some(v=>String(v||"").trim()));
-    next.transport=[...cloneJourneySeed().transport,...extras].map((x,i)=>({...x,label:String(i+1).padStart(2,"0")}));
+  for(const key of ["transport","stays","itinerary","memos","packing","logs"]){
+    if(!Array.isArray(next[key])) next[key]=[];
   }
-  next.stays=next.stays.filter(x=>!(x&&x.id==="stay4"&&x.name==="エレガンテ白浜"&&x.status==="延泊保険"));
   next.stays=relabelStays(next.stays);
-  next.itinerary=Array.isArray(next.itinerary)?next.itinerary:[];next.memos=Array.isArray(next.memos)?next.memos:[];next.packing=Array.isArray(next.packing)?next.packing:[];next.logs=Array.isArray(next.logs)?next.logs:[];
-  next.trip={...next.trip,lifecycle:"active"};next.schemaVersion="0.5.8";next.meta={...(next.meta||{}),migratedToRegistryV050:true};
+  next.trip={...next.trip,lifecycle:"active"};
+  next.schemaVersion="0.5.8";
+  next.meta={...(next.meta||{}),migratedToRegistryV050:true};
   return next;
 }
 
@@ -213,6 +164,17 @@ function deleteSavedJourney(id){const r=loadRegistry();const before=r.savedJourn
 function patchJourneyTrip(fields){const box=loadJourneyBox();box.trip={...(box.trip||{}),...fields};return saveJourneyBox(box);}
 function patchJourneyWelcome(profile){const box=loadJourneyBox();box.welcome={...(box.welcome||{}),...profile};if(profile.party)box.trip.partyMode=profile.party;if(profile.mood)box.trip.mood=profile.mood;if(profile.stage)box.trip.readiness=profile.stage;if(profile.entryRoute)box.trip.entryRoute=profile.entryRoute;if(Array.isArray(profile.known))box.trip.knownCategories=[...profile.known];if(typeof profile.knownNote==="string")box.trip.knownNote=profile.knownNote;return saveJourneyBox(box);}
 function replaceJourneyTransport(items){const box=loadJourneyBox();box.transport=items;return saveJourneyBox(box);}
+/* Delete exactly one transport card of the active journey by stable ID.
+   Do not modify other collections or any saved journey. */
+function removeJourneyTransportLeg(id){
+  const box=loadJourneyBox();
+  const items=Array.isArray(box.transport)?box.transport:[];
+  const key=String(id||"");
+  if(!key||items.filter(item=>String(item.id)===key).length!==1)return false;
+  box.transport=items.filter(item=>String(item.id)!==key).map((item,i)=>({...item,label:String(i+1).padStart(2,"0")}));
+  saveJourneyBox(box);
+  return true;
+}
 function replaceJourneyStays(items){const box=loadJourneyBox();box.stays=relabelStays(items);return saveJourneyBox(box);}
 function resetJourneyWelcome(){const box=loadJourneyBox();box.welcome=null;if(box.trip){box.trip.partyMode=null;box.trip.mood=null;box.trip.readiness=null;box.trip.entryRoute=null;box.trip.knownCategories=[];box.trip.knownNote="";}return saveJourneyBox(box);}
 function resetJourneyBox(){return startNewBlankJourney({saveCurrent:false});}
@@ -221,7 +183,7 @@ function resetJourneyBox(){return startNewBlankJourney({saveCurrent:false});}
 const JOURNEY_BACKUP_FORMAT = "project-lady-journey-backup-v1";
 function buildJourneyBackup(){
   const registry=deepClone(loadRegistry());
-  return {format:JOURNEY_BACKUP_FORMAT,appVersion:"0.5.9",exportedAt:new Date().toISOString(),registry};
+  return {format:JOURNEY_BACKUP_FORMAT,appVersion:"0.5.10.4",exportedAt:new Date().toISOString(),registry};
 }
 function validateJourneyBackup(payload){
   if(!payload||payload.format!==JOURNEY_BACKUP_FORMAT||!payload.registry||!payload.registry.currentJourney)return false;
